@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  gostinho-backend:
+    build: .
+    container_name: gostinho_api
+    restart: always # Magia pura: si el VPS se reinicia, tu app se vuelve a prender sola
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env # Aquí le pasamos tus variables de entorno de forma segura

@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// NÚCLEO SAAS
+// ==========================================
+
+model planes {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre          String   @unique @db.VarChar(255) // Ej: Básico, Premium, VIP
+  descripcion     String?
+  precioMensual   Decimal  @default(0) @db.Decimal(10, 2)
+
+  // Los límites que antes estaban en código, ahora viven en la BD
+  maxSucursales   Int      @default(1)
+  maxUsuarios     Int      @default(3)
+
+  activo          Boolean  @default(true) // Permite ocultar planes viejos sin romper clientes actuales
+
+  // Relación: Un plan es contratado por muchos restaurantes
+  restaurantes    restaurantes[]
+
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime @updatedAt @db.Timestamptz(6)
+}
+
+model restaurantes {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre            String   @db.VarChar(255)
+  suscripcionActiva Boolean  @default(true)
+  fechaVencimiento  DateTime? @db.Timestamptz(6)
+
+  // --- MAGIA RELACIONAL AQUÍ ---
+  plan_id           String?  @db.Uuid
+  plan              planes?  @relation(fields: [plan_id], references: [id])
+
+  usuarios          usuarios[]
+
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime @updatedAt @db.Timestamptz(6)
+}
+
+// ==========================================
+// TABLAS DE GESTIÓN (Con restaurante_id)
+// ==========================================
+
+model usuarios {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre         String        @unique @db.VarChar(255)
+  email          String?       @unique @db.VarChar(255) // <-- AGREGA ESTA LÍNEA
+  password       String        @db.VarChar(255)
+  rol            String?       @default("Cajero") @db.VarChar(255)
+  activo         Boolean?      @default(true)
+  created_at     DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime      @updatedAt @db.Timestamptz(6)
+
+  restaurante_id String?       @db.Uuid
+  restaurante    restaurantes? @relation(fields: [restaurante_id], references: [id])
+}
+
+model clientes {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre         String        @db.VarChar(255)
+  telefono       String?       @db.VarChar(50)
+  puntos_lealtad Int?          @default(0)
+  created_at     DateTime      @default(now()) @db.Timestamptz(6)
+
+  // Vínculo con el restaurante
+  restaurante_id String?       @db.Uuid
+  restaurante    restaurantes? @relation(fields: [restaurante_id], references: [id])
+
+  // Evita teléfonos duplicados en el mismo local
+  @@unique([telefono, restaurante_id])
+}
+
+model Productos {
+  id                                                           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre                                                       String            @db.VarChar(255)
+  descripcion                                                  String?
+  imagen                                                       String?           @db.VarChar(255)
+  activo                                                       Boolean?          @default(true)
+  CategoriaId                                                  String?           @db.Uuid
+  grupo_sabores                                                String?           @db.VarChar(255)
+  created_at                                                   DateTime          @db.Timestamptz(6)
+  updated_at                                                   DateTime          @db.Timestamptz(6)
+
+  // Vínculo con el restaurante
+  restaurante_id                                               String?           @db.Uuid
+  restaurante                                                  restaurantes?     @relation(fields: [restaurante_id], references: [id])
+
+  categoria                                                    categoria?        @relation(fields: [CategoriaId], references: [id])
+  promocion_items_promocion_items_producto_hijo_idToProductos  promocion_items[] @relation("promocion_items_producto_hijo_idToProductos")
+  promocion_items_promocion_items_producto_padre_idToProductos promocion_items[] @relation("promocion_items_producto_padre_idToProductos")
+  variantes                                                    variantes[]
+}
+
+model categoria {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre         String        @db.VarChar(255)
+  orden          Int?          @default(10)
+  activa         Boolean?      @default(true)
+  created_at     DateTime      @db.Timestamptz(6)
+  updated_at     DateTime      @db.Timestamptz(6)
+
+  // Vínculo con el restaurante
+  restaurante_id String?       @db.Uuid
+  restaurante    restaurantes? @relation(fields: [restaurante_id], references: [id])
+
+  Productos      Productos[]
+}
+
+model opcions {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre         String        @db.VarChar(255)
+  precio_extra   Int?          @default(0)
+  stock          Boolean?      @default(true)
+  tipo           String        @default("topping") @db.VarChar(255)
+  created_at     DateTime      @db.Timestamptz(6)
+  updated_at     DateTime      @db.Timestamptz(6)
+
+  // Vínculo con el restaurante
+  restaurante_id String?       @db.Uuid
+  restaurante    restaurantes? @relation(fields: [restaurante_id], references: [id])
+}
+
+model ordenes {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  folio           Int
+  cliente         String?           @default("Público General") @db.VarChar(255)
+  fecha           DateTime?         @db.Timestamptz(6)
+  total           Int?              @default(0)
+  metodo_pago     String?           @default("EFECTIVO") @db.VarChar(255)
+  estado          String?           @default("PAGADO") @db.VarChar(255)
+  observaciones   String?           @db.VarChar(255)
+  created_at      DateTime          @db.Timestamptz(6)
+  updated_at      DateTime          @db.Timestamptz(6)
+
+  // Vínculo con el restaurante
+  restaurante_id  String?           @db.Uuid
+  restaurante     restaurantes?     @relation(fields: [restaurante_id], references: [id])
+
+  detalle_ordenes detalle_ordenes[]
+}
+
+// ==========================================
+// TABLAS HIJAS (Sin cambios necesarios)
+// ==========================================
+
+model variantes {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre          String            @db.VarChar(255)
+  precio          Int               @default(0)
+  limite_toppings Int?              @default(0)
+  limite_salsas   Int?              @default(0)
+  limite_frutas   Int?              @default(0)
+  limite_sabores  Int?              @default(0)
+  stock           Boolean?          @default(true)
+  created_at      DateTime          @db.Timestamptz(6)
+  updated_at      DateTime          @db.Timestamptz(6)
+  producto_id     String?           @db.Uuid
+  promocion_items promocion_items[]
+  Productos       Productos?        @relation(fields: [producto_id], references: [id], onDelete: Cascade)
+}
+
+model detalle_ordenes {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre_producto   String   @db.VarChar(255)
+  nombre_variante   String?  @db.VarChar(255)
+  cantidad          Int
+  precio_unitario   Int
+  subtotal          Int
+  opciones_elegidas Json?    @db.Json
+  created_at        DateTime @db.Timestamptz(6)
+  updated_at        DateTime @db.Timestamptz(6)
+  OrdenId           String?  @db.Uuid
+  ProductoId        String?  @db.Uuid
+  ordenes           ordenes? @relation(fields: [OrdenId], references: [id], onDelete: Cascade)
+}
+
+model detalles {
+  id              String   @id @db.Uuid
+  cantidad        Int?     @default(1)
+  precio_unitario Int
+  nota            String?  @db.VarChar(255)
+  created_at      DateTime @db.Timestamptz(6)
+  updated_at      DateTime @db.Timestamptz(6)
+}
+
+model promocion_items {
+  id                                                     String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cantidad                                               Int?       @default(1)
+  producto_padre_id                                      String?    @db.Uuid
+  producto_hijo_id                                       String?    @db.Uuid
+  variante_hijo_id                                       String?    @db.Uuid
+  Productos_promocion_items_producto_hijo_idToProductos  Productos? @relation("promocion_items_producto_hijo_idToProductos", fields: [producto_hijo_id], references: [id])
+  Productos_promocion_items_producto_padre_idToProductos Productos? @relation("promocion_items_producto_padre_idToProductos", fields: [producto_padre_id], references: [id], onDelete: Cascade)
+  variantes                                              variantes? @relation(fields: [variante_hijo_id], references: [id])
+}
