@@ -1,17 +1,46 @@
-// src/controllers/auth.controller.js
-const prisma = require('../config/db');
+const Usuario = require('../models/usuario.model');
+const Empresa = require('../models/empresa.model'); // Sustituye a Restaurante según tu nuevo modelo
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Iniciar sesión en el sistema
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: admin@gostinho.cl
+ *               password:
+ *                 type: string
+ *                 example: admin123
+ *     responses:
+ *       200:
+ *         description: Login exitoso
+ *       401:
+ *         description: Contraseña incorrecta
+ *       404:
+ *         description: Usuario no encontrado
+ */
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const usuario = await prisma.usuarios.findUnique({
+    // Sequelize: findOne con relación a Empresa (antes Restaurante)
+    const usuario = await Usuario.findOne({
       where: { email },
-      include: {
-        restaurante: true
-      }
+      include: [{ model: Empresa, as: 'empresa' }]
     });
 
     if (!usuario) {
@@ -22,17 +51,14 @@ const login = async (req, res) => {
       return res.status(403).json({ error: 'El usuario ha sido desactivado' });
     }
 
-    if (usuario.restaurante && usuario.restaurante.suscripcionActiva === false) {
+    // Validación de suscripción multitenant
+    if (usuario.empresa && usuario.empresa.suscripcionActiva === false) {
       return res.status(403).json({
-        error: 'El acceso está suspendido. La suscripción de este restaurante se encuentra inactiva. Por favor, contacta a soporte.'
+        error: 'Suscripción inactiva. Por favor, contacta a soporte.'
       });
     }
 
-    // 2. Verificar contraseña
-    // Recuerda usar bcrypt si ya estás encriptando las claves. 
-    // Si tus claves actuales están en texto normal, usa la validación simple temporalmente.
     const passwordValida = await bcrypt.compare(password, usuario.password);
-    // const passwordValida = (password === usuario.password); 
 
     if (!passwordValida) {
       return res.status(401).json({ error: 'Contraseña incorrecta' });
@@ -41,24 +67,25 @@ const login = async (req, res) => {
     const payload = {
       id: usuario.id,
       rol: usuario.rol,
-      restaurante_id: usuario.restaurante_id
+      empresa_id: usuario.empresa_id
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: '8h'
     });
 
-    delete usuario.password;
+    const usuarioData = usuario.toJSON();
+    delete usuarioData.password;
 
     res.json({
       mensaje: 'Login exitoso',
       token,
-      usuario
+      usuario: usuarioData
     });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error en el servidor al intentar iniciar sesión' });
+    res.status(500).json({ error: 'Error en el servidor' });
   }
 };
 

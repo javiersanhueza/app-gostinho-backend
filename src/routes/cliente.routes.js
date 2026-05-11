@@ -9,10 +9,11 @@ const {
 
 
 const { verificarRol } = require('../middlewares/auth.middleware');
+const ROLES = require('../config/roles');
 
 const router = Router();
 
-const rolesPermitidos = ['ADMIN_SISTEMA', 'ADMIN_LOCAL', 'CAJERO'];
+const rolesPermitidos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_LOCAL, ROLES.CAJERO];
 
 router.post('/', verificarRol(rolesPermitidos), crearCliente);
 router.get('/', verificarRol(rolesPermitidos), obtenerClientes);

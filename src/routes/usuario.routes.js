@@ -6,10 +6,11 @@ const {
   eliminarUsuario
 } = require('../controllers/usuario.controller');
 const { verificarRol } = require('../middlewares/auth.middleware');
+const ROLES = require('../config/roles');
 
 const router = Router();
 
-const rolesPermitidos = ['ADMIN_SISTEMA', 'ADMIN_LOCAL'];
+const rolesPermitidos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_LOCAL];
 
 router.post('/', verificarRol(rolesPermitidos), crearUsuario);
 router.get('/', verificarRol(rolesPermitidos), obtenerUsuarios);

@@ -1,22 +1,21 @@
 require('dotenv').config();
 const app = require('./app');
+const sequelize = require('./config/db');
 
-// 1. Importa la conexión
-const prisma = require('./config/db');
 const PORT = process.env.PORT || 3000;
 
 async function main() {
   try {
+    await sequelize.authenticate();
+    console.log('Conexión a MySQL local establecida correctamente ✅');
 
-    // 2. Se intenta conectar a la base de datos
-    await prisma.$connect();
-    console.log('Base de datos (supabase) conectada correctamente');
+    // Volvemos a alter: true o simplemente sync() una vez que la DB fue limpiada.
+    await sequelize.sync();
+    console.log('Tablas sincronizadas automáticamente 🔄');
 
-    // 3. Inicia el servidor
     app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
   } catch (error) {
-    // 4. Si falla la db, mostrar error y se detiene el proceso
-    console.error('Error fatal al conectar a la base de datos:', error);
+    console.error('Error fatal al conectar a MySQL:', error);
     process.exit(1);
   }
 }

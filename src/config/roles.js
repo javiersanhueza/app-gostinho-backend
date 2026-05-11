@@ -1,0 +1,8 @@
+const ROLES = {
+  ADMIN_SISTEMA: 'ADMIN_SISTEMA',
+  ADMIN_LOCAL: 'ADMIN_LOCAL',
+  GERENTE: 'GERENTE',
+  CAJERO: 'CAJERO'
+};
+
+module.exports = ROLES;

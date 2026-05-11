@@ -8,13 +8,16 @@ const {
 } = require('../controllers/restaurante.controller');
 
 const { verificarRol } = require('../middlewares/auth.middleware');
+const ROLES = require('../config/roles');
 const router = Router();
 
-router.get('/', verificarRol(['ADMIN_SISTEMA']), obtenerRestaurantes);
-router.post('/', verificarRol(['ADMIN_SISTEMA']), crearRestaurante);
-router.put('/:id', verificarRol(['ADMIN_SISTEMA']), editarRestaurante);
-//router.delete('/:id', verificarRol(['ADMIN_SISTEMA']), eliminarRestaurante);
-router.patch('/:id/status', verificarRol(['ADMIN_SISTEMA']), toggleEstatusRestaurante);
+const rolesAdmin = [ROLES.ADMIN_SISTEMA];
+
+router.get('/', verificarRol(rolesAdmin), obtenerRestaurantes);
+router.post('/', verificarRol(rolesAdmin), crearRestaurante);
+router.put('/:id', verificarRol(rolesAdmin), editarRestaurante);
+//router.delete('/:id', verificarRol(rolesAdmin), eliminarRestaurante);
+router.patch('/:id/status', verificarRol(rolesAdmin), toggleEstatusRestaurante);
 router.post('/inicializar', inicializarSaaS);
 
 module.exports = router;

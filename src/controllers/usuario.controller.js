@@ -1,5 +1,6 @@
 const prisma = require('../config/db');
 const bcrypt = require('bcryptjs');
+const ROLES = require('../config/roles');
 
 const crearUsuario = async (req, res) => {
   try {
@@ -14,7 +15,7 @@ const crearUsuario = async (req, res) => {
 
     // 1. Validar jerarquía de roles
     // Un dueño de local no puede crear un super-administrador del sistema
-    if (rol === 'ADMIN_SISTEMA' && creador.rol !== 'ADMIN_SISTEMA') {
+    if (rol === ROLES.ADMIN_SISTEMA && creador.rol !== ROLES.ADMIN_SISTEMA) {
       return res.status(403).json({ error: 'No tienes permisos para crear un administrador del sistema' });
     }
 
@@ -23,7 +24,7 @@ const crearUsuario = async (req, res) => {
 
     // (Opcional) Si TÚ (ADMIN_SISTEMA) estás creando al dueño de un local nuevo,
     // tú le envías el ID del restaurante en el body.
-    if (creador.rol === 'ADMIN_SISTEMA' && req.body.restaurante_id) {
+    if (creador.rol === ROLES.ADMIN_SISTEMA && req.body.restaurante_id) {
       restaurante_id_asignado = req.body.restaurante_id;
     }
 
@@ -37,7 +38,7 @@ const crearUsuario = async (req, res) => {
         nombre,
         email,
         password: passwordEncriptada,
-        rol: rol || 'CAJERO', // Por defecto será cajero si no envían rol
+        rol: rol || ROLES.CAJERO, // Por defecto será cajero si no envían rol
         restaurante_id: restaurante_id_asignado,
         activo: true
       }
