@@ -9,10 +9,9 @@ async function main() {
     await sequelize.authenticate();
     console.log('Conexión a la base de datos establecida correctamente ✅');
 
-    // Volvemos a alter: true para el funcionamiento normal.
-    // Esto aplicará cambios futuros sin borrar los datos.
-    await sequelize.sync({ alter: true });
-    console.log('Tablas sincronizadas (modo no destructivo).');
+    // ÚLTIMO RESET: Usamos force: true para limpiar la DB de cualquier tabla corrupta.
+    await sequelize.sync({ force: true });
+    console.log('Tablas RE-CREADAS desde cero. ✅');
 
     app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
   } catch (error) {
