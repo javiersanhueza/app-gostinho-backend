@@ -12,7 +12,9 @@ const Orden = sequelize.define('Orden', {
     primaryKey: true
   },
   folio: {
-    type: DataTypes.INTEGER,
+    // En PostgreSQL, SERIAL es un alias para INTEGER con autoIncrement y una secuencia.
+    // Sequelize maneja esta traducción si usamos el tipo correcto.
+    type: DataTypes.INTEGER, 
     autoIncrement: true,
     allowNull: false,
     unique: true
@@ -63,10 +65,9 @@ const Orden = sequelize.define('Orden', {
       key: 'id'
     }
   },
-  // NUEVO CAMPO: Vínculo a la cuenta de la mesa
   comanda_id: {
     type: DataTypes.UUID,
-    allowNull: true, // Nulo si es una orden de caja directa
+    allowNull: true,
     references: {
       model: 'comandas',
       key: 'id'
@@ -89,7 +90,6 @@ Sucursal.hasMany(Orden, { foreignKey: 'sucursal_id', as: 'ordenes' });
 Orden.belongsTo(Cliente, { foreignKey: 'cliente_id', as: 'cliente' });
 Cliente.hasMany(Orden, { foreignKey: 'cliente_id', as: 'ordenes' });
 
-// NUEVA RELACIÓN: Una orden pertenece a una comanda
 Orden.belongsTo(Comanda, { foreignKey: 'comanda_id', as: 'comanda' });
 Comanda.hasMany(Orden, { foreignKey: 'comanda_id', as: 'ordenes' });
 
