@@ -9,9 +9,10 @@ async function main() {
     await sequelize.authenticate();
     console.log('Conexión a la base de datos establecida correctamente ✅');
 
-    // ÚLTIMO RESET: Usamos force: true para limpiar la DB de cualquier tabla corrupta.
-    await sequelize.sync({ force: true });
-    console.log('Tablas RE-CREADAS desde cero. ✅');
+    // La sincronización automática se deshabilita en producción para evitar errores.
+    // Los cambios en la BD se harán manualmente o con migraciones.
+    // await sequelize.sync(); 
+    console.log('Sincronización de BD deshabilitada en producción. Servidor estable.');
 
     app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
   } catch (error) {
