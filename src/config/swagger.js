@@ -10,9 +10,13 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000/api/v1',
-        description: 'Servidor Local',
+        url: 'https://gostinho-api.onrender.com/api/v1',
+        description: 'Servidor de Producción (Render)'
       },
+      {
+        url: 'http://localhost:3000/api/v1',
+        description: 'Servidor Local'
+      }
     ],
     components: {
       securitySchemes: {
@@ -24,7 +28,8 @@ const options = {
       },
     },
   },
-  apis: ['./src/routes/*.js', './src/controllers/*.js'], // Donde Swagger buscará la documentación
+  // Asegúrate de que los paths a tus archivos con anotaciones son correctos
+  apis: ['./src/routes/*.js', './src/controllers/*.js'],
 };
 
 const specs = swaggerJsdoc(options);
