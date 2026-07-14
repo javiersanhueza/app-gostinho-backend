@@ -19,6 +19,7 @@ const varianteRoutes = require('./routes/variante.routes');
 const comandaRoutes = require('./routes/comanda.routes');
 const ingredientesRoutes = require('./routes/ingredientes.routes');
 const grupoOpcionesRoutes = require('./routes/grupo_opciones.routes');
+const seedRoutes = require('./routes/seed.routes');
 
 const app = express();
 
@@ -80,8 +81,9 @@ app.use('/api/v1/productos', productoRoutes);
 app.use('/api/v1/ordenes', ordenRoutes);
 app.use('/api/v1/variantes', varianteRoutes);
 app.use('/api/v1/comandas', comandaRoutes);
-app.use('/api/v1', ingredientesRoutes); // Contiene /sabores, /frutas, /toppings
-app.use('/api/v1', grupoOpcionesRoutes); // Contiene /grupo-opciones y /productos/:id/configuracion
+app.use('/api/v1', ingredientesRoutes);
+app.use('/api/v1', grupoOpcionesRoutes);
+app.use('/api/v1/seed', seedRoutes); // Nueva ruta para el seeder
 
 app.use((req, res, next) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
