@@ -12,6 +12,13 @@ const clienteRoutes = require('./routes/cliente.routes');
 const planRoutes = require('./routes/plan.routes');
 const empresaRoutes = require('./routes/empresa.routes');
 const sucursalRoutes = require('./routes/sucursal.routes');
+const categoriaRoutes = require('./routes/categoria.routes');
+const productoRoutes = require('./routes/producto.routes');
+const ordenRoutes = require('./routes/orden.routes');
+const varianteRoutes = require('./routes/variante.routes');
+const comandaRoutes = require('./routes/comanda.routes');
+const ingredientesRoutes = require('./routes/ingredientes.routes');
+const grupoOpcionesRoutes = require('./routes/grupo_opciones.routes');
 
 const app = express();
 
@@ -58,7 +65,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
     persistAuthorization: true,
   },
   customSiteTitle: "Gostinho API Docs",
-  customJs: '/swagger-inject.js' // Pasamos la URL del script externo en lugar de un string en línea
+  customJs: '/swagger-inject.js'
 }));
 
 app.use('/api/v1/usuarios', usuariosRoutes);
@@ -68,6 +75,13 @@ app.use('/api/v1/clientes', clienteRoutes);
 app.use('/api/v1/plan', planRoutes);
 app.use('/api/v1/empresas', empresaRoutes);
 app.use('/api/v1/sucursales', sucursalRoutes);
+app.use('/api/v1/categorias', categoriaRoutes);
+app.use('/api/v1/productos', productoRoutes);
+app.use('/api/v1/ordenes', ordenRoutes);
+app.use('/api/v1/variantes', varianteRoutes);
+app.use('/api/v1/comandas', comandaRoutes);
+app.use('/api/v1', ingredientesRoutes); // Contiene /sabores, /frutas, /toppings
+app.use('/api/v1', grupoOpcionesRoutes); // Contiene /grupo-opciones y /productos/:id/configuracion
 
 app.use((req, res, next) => {
   res.status(404).json({ error: 'Ruta no encontrada' });

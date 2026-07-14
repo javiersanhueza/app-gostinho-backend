@@ -9,8 +9,7 @@ async function main() {
     await sequelize.authenticate();
     console.log('Conexión a MySQL local establecida correctamente ✅');
 
-    // Volvemos a alter: true o simplemente sync() una vez que la DB fue limpiada.
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
     console.log('Tablas sincronizadas automáticamente 🔄');
 
     app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
