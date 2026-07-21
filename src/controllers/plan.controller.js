@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const Plan = require('../models/plan.model');
 
 /**
@@ -5,11 +6,42 @@ const Plan = require('../models/plan.model');
  * tags:
  *   name: Planes
  *   description: Gestión de planes de suscripción (Solo ADMIN_SISTEMA)
+ * 
+ * /plan:
+ *   get:
+ *     summary: Obtener lista de planes con filtros
+ *     tags: [Planes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: nombre
+ *         schema:
+ *           type: string
+ *         description: Filtrar planes por nombre (búsqueda parcial).
+ *       - in: query
+ *         name: activo
+ *         schema:
+ *           type: boolean
+ *         description: Filtrar por estado del plan (true o false).
+ *     responses:
+ *       200:
+ *         description: Lista de planes filtrada.
  */
-
 const obtenerPlanes = async (req, res) => {
   try {
+    const { nombre, activo } = req.query;
+    const whereClause = {};
+
+    if (nombre) {
+      whereClause.nombre = { [Op.like]: `%${nombre}%` };
+    }
+    if (activo !== undefined) {
+      whereClause.activo = (activo === 'true');
+    }
+
     const planes = await Plan.findAll({
+      where: whereClause,
       order: [['precioMensual', 'ASC']]
     });
     res.json({ data: planes });
