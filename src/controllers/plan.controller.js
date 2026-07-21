@@ -3,57 +3,71 @@ const Plan = require('../models/plan.model');
 
 /**
  * @swagger
- * tags:
- *   name: Planes
- *   description: Gestión de planes de suscripción (Solo ADMIN_SISTEMA)
- * 
  * /plan:
  *   get:
- *     summary: Obtener lista de planes con filtros
+ *     summary: Obtener lista paginada de planes con filtros
  *     tags: [Planes]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Número de la página a obtener.
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Cantidad de resultados por página.
+ *       - in: query
  *         name: nombre
  *         schema:
  *           type: string
- *         description: Filtrar planes por nombre (búsqueda parcial).
+ *         description: Filtrar por nombre.
  *       - in: query
  *         name: activo
  *         schema:
  *           type: boolean
- *         description: Filtrar por estado del plan (true o false).
+ *         description: Filtrar por estado del plan.
  *     responses:
  *       200:
- *         description: Lista de planes filtrada.
+ *         description: Lista paginada de planes.
  */
 const obtenerPlanes = async (req, res) => {
   try {
-    const { nombre, activo } = req.query;
+    const { page = 1, limit = 10, nombre, activo } = req.query;
+    const offset = (page - 1) * limit;
+
     const whereClause = {};
+    if (nombre) whereClause.nombre = { [Op.like]: `%${nombre}%` };
+    if (activo !== undefined) whereClause.activo = (activo === 'true');
 
-    if (nombre) {
-      whereClause.nombre = { [Op.like]: `%${nombre}%` };
-    }
-    if (activo !== undefined) {
-      whereClause.activo = (activo === 'true');
-    }
-
-    const planes = await Plan.findAll({
+    const { count, rows } = await Plan.findAndCountAll({
       where: whereClause,
-      order: [['precioMensual', 'ASC']]
+      order: [['precioMensual', 'ASC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
     });
-    res.json({ data: planes });
+
+    res.json({
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: parseInt(page),
+      data: rows
+    });
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener los planes' });
   }
 };
 
+// ... (el resto de los métodos se mantienen igual)
+
 const crearPlan = async (req, res) => {
   try {
     const { nombre, descripcion, precioMensual, maxSucursales, maxUsuarios } = req.body;
-
     const nuevoPlan = await Plan.create({
       nombre,
       descripcion,
@@ -62,7 +76,6 @@ const crearPlan = async (req, res) => {
       maxUsuarios: maxUsuarios || 3,
       activo: true
     });
-
     res.status(201).json({ mensaje: 'Plan creado con éxito', data: nuevoPlan });
   } catch (error) {
     if (error.name === 'SequelizeUniqueConstraintError') {
@@ -76,9 +89,7 @@ const editarPlan = async (req, res) => {
   try {
     const { id } = req.params;
     const [updated] = await Plan.update(req.body, { where: { id } });
-
     if (!updated) return res.status(404).json({ error: 'Plan no encontrado' });
-
     const planActualizado = await Plan.findByPk(id);
     res.json({ mensaje: 'Plan actualizado', data: planActualizado });
   } catch (error) {
@@ -90,12 +101,9 @@ const toggleEstadoPlan = async (req, res) => {
   try {
     const { id } = req.params;
     const plan = await Plan.findByPk(id);
-
     if (!plan) return res.status(404).json({ error: 'Plan no encontrado' });
-
     plan.activo = !plan.activo;
     await plan.save();
-
     res.json({
       mensaje: `El plan ${plan.nombre} ahora está ${plan.activo ? 'activo' : 'inactivo'}`,
       data: plan

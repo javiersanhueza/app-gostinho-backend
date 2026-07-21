@@ -4,75 +4,82 @@ const Plan = require('../models/plan.model');
 
 /**
  * @swagger
- * tags:
- *   name: Empresas
- *   description: Gestión de empresas (Solo ADMIN_SISTEMA)
- * 
  * /empresas:
  *   get:
- *     summary: Obtener lista de empresas con filtros
+ *     summary: Obtener lista paginada de empresas con filtros
  *     tags: [Empresas]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Número de la página a obtener.
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Cantidad de resultados por página.
+ *       - in: query
  *         name: nombre
  *         schema:
  *           type: string
- *         description: Filtrar empresas por nombre (búsqueda parcial).
+ *         description: Filtrar por nombre.
  *       - in: query
  *         name: rut
  *         schema:
  *           type: string
- *         description: Filtrar por RUT exacto.
+ *         description: Filtrar por RUT.
  *       - in: query
  *         name: plan_id
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Filtrar por el ID de un plan específico.
+ *         description: Filtrar por ID de plan.
  *       - in: query
  *         name: suscripcionActiva
  *         schema:
  *           type: boolean
- *         description: Filtrar por estado de suscripción (true o false).
+ *         description: Filtrar por estado de suscripción.
  *     responses:
  *       200:
- *         description: Lista de empresas filtrada.
+ *         description: Lista paginada de empresas.
  */
 const getEmpresas = async (req, res) => {
   try {
-    const { nombre, rut, plan_id, suscripcionActiva } = req.query;
+    const { page = 1, limit = 10, nombre, rut, plan_id, suscripcionActiva } = req.query;
+    const offset = (page - 1) * limit;
+
     const whereClause = {};
+    if (nombre) whereClause.nombre = { [Op.like]: `%${nombre}%` };
+    if (rut) whereClause.rut = rut;
+    if (plan_id) whereClause.plan_id = plan_id;
+    if (suscripcionActiva !== undefined) whereClause.suscripcionActiva = (suscripcionActiva === 'true');
 
-    if (nombre) {
-      // Usamos Op.iLike para búsqueda case-insensitive en PostgreSQL
-      // o Op.like para MySQL (case-sensitive por defecto, depende de la colación de la DB)
-      whereClause.nombre = { [Op.like]: `%${nombre}%` };
-    }
-    if (rut) {
-      whereClause.rut = rut;
-    }
-    if (plan_id) {
-      whereClause.plan_id = plan_id;
-    }
-    if (suscripcionActiva !== undefined) {
-      // Convertimos el string 'true' o 'false' a booleano
-      whereClause.suscripcionActiva = (suscripcionActiva === 'true');
-    }
-
-    const empresas = await Empresa.findAll({
+    const { count, rows } = await Empresa.findAndCountAll({
       where: whereClause,
       include: { model: Plan, as: 'plan' },
-      order: [['nombre', 'ASC']]
+      order: [['nombre', 'ASC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
     });
 
-    res.json({ data: empresas });
+    res.json({
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: parseInt(page),
+      data: rows
+    });
   } catch (error) {
     console.error('Error al obtener empresas:', error);
     res.status(500).json({ error: 'Error al obtener empresas' });
   }
 };
+
+// ... (el resto de los métodos se mantienen igual)
 
 const getEmpresaById = async (req, res) => {
   try {
@@ -87,28 +94,14 @@ const getEmpresaById = async (req, res) => {
 const createEmpresa = async (req, res) => {
   try {
     const { nombre, rut, plan_id, fechaVencimiento } = req.body;
-
-    const nuevaEmpresa = await Empresa.create({
-      nombre,
-      rut,
-      plan_id,
-      fechaVencimiento
-    });
-
+    const nuevaEmpresa = await Empresa.create({ nombre, rut, plan_id, fechaVencimiento });
     res.status(201).json(nuevaEmpresa);
-
   } catch (error) {
     if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(400).json({
-        error: 'El RUT ingresado ya se encuentra registrado en el sistema.',
-        detalle: 'Conflict on field: rut'
-      });
+      return res.status(400).json({ error: 'El RUT ingresado ya se encuentra registrado.' });
     }
     console.error('Error al crear empresa:', error);
-    res.status(500).json({
-      error: 'Error interno al intentar crear la empresa',
-      detalle: error.message
-    });
+    res.status(500).json({ error: 'Error interno al crear la empresa' });
   }
 };
 
