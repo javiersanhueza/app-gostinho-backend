@@ -1,53 +1,11 @@
 const { Op } = require('sequelize');
 const Empresa = require('../models/empresa.model');
 const Plan = require('../models/plan.model');
+const Usuario = require('../models/usuario.model');
+const Sucursal = require('../models/sucursal.model');
+const ROLES = require('../config/roles');
 
-/**
- * @swagger
- * /empresas:
- *   get:
- *     summary: Obtener lista paginada de empresas con filtros
- *     tags: [Empresas]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Número de la página a obtener.
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Cantidad de resultados por página.
- *       - in: query
- *         name: nombre
- *         schema:
- *           type: string
- *         description: Filtrar por nombre.
- *       - in: query
- *         name: rut
- *         schema:
- *           type: string
- *         description: Filtrar por RUT.
- *       - in: query
- *         name: plan_id
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Filtrar por ID de plan.
- *       - in: query
- *         name: suscripcionActiva
- *         schema:
- *           type: boolean
- *         description: Filtrar por estado de suscripción.
- *     responses:
- *       200:
- *         description: Lista paginada de empresas.
- */
+// ... (getEmpresas se mantiene igual)
 const getEmpresas = async (req, res) => {
   try {
     const { page = 1, limit = 10, nombre, rut, plan_id, suscripcionActiva } = req.query;
@@ -79,18 +37,69 @@ const getEmpresas = async (req, res) => {
   }
 };
 
-// ... (el resto de los métodos se mantienen igual)
-
+/**
+ * @swagger
+ * /empresas/{id}:
+ *   get:
+ *     summary: Obtener el detalle completo de una empresa
+ *     tags: [Empresas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Detalle de la empresa con contadores y administrador.
+ *       404:
+ *         description: Empresa no encontrada.
+ */
 const getEmpresaById = async (req, res) => {
   try {
-    const empresa = await Empresa.findByPk(req.params.id, { include: { model: Plan, as: 'plan' } });
-    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
-    res.json(empresa);
+    const { id } = req.params;
+
+    // 1. Obtener los datos de la empresa y su plan
+    const empresa = await Empresa.findByPk(id, {
+      include: { model: Plan, as: 'plan' }
+    });
+
+    if (!empresa) {
+      return res.status(404).json({ error: 'Empresa no encontrada' });
+    }
+
+    // 2. Contar sucursales y usuarios
+    const totalSucursales = await Sucursal.count({ where: { empresa_id: id } });
+    const totalUsuarios = await Usuario.count({ where: { empresa_id: id } });
+
+    // 3. Encontrar al usuario administrador de esa empresa
+    const adminEmpresa = await Usuario.findOne({
+      where: {
+        empresa_id: id,
+        rol: ROLES.ADMIN_EMPRESA
+      },
+      attributes: ['id', 'nombre', 'email', 'activo']
+    });
+
+    // 4. Ensamblar la respuesta
+    const response = {
+      ...empresa.toJSON(),
+      totalSucursales,
+      totalUsuarios,
+      adminEmpresa: adminEmpresa || null // Devolver null si no se encuentra
+    };
+
+    res.json(response);
   } catch (error) {
+    console.error('Error al obtener la empresa:', error);
     res.status(500).json({ error: 'Error al obtener la empresa' });
   }
 };
 
+// ... (el resto de los métodos se mantienen igual)
 const createEmpresa = async (req, res) => {
   try {
     const { nombre, rut, plan_id, fechaVencimiento } = req.body;
