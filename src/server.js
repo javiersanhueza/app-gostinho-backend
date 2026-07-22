@@ -9,10 +9,10 @@ async function main() {
     await sequelize.authenticate();
     console.log('Conexión a la base de datos establecida correctamente ✅');
 
-    // La sincronización automática se deshabilita en producción para evitar errores.
-    // Los cambios en la BD se harán manualmente o con migraciones.
-    // await sequelize.sync(); 
-    console.log('Sincronización de BD deshabilitada en producción. Servidor estable.');
+    // FORZAMOS LA RE-CREACIÓN DE TABLAS para aplicar el nuevo sistema de ROLES.
+    // Esto borrará todos los datos actuales.
+    await sequelize.sync({ force: true });
+    console.log('Tablas RE-CREADAS desde cero para el nuevo sistema de roles. ✅');
 
     app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
   } catch (error) {
