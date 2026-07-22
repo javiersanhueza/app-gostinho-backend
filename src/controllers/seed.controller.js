@@ -8,17 +8,16 @@ const bcrypt = require('bcryptjs');
 const ROLES = require('../config/roles');
 
 const ejecutarSeed = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { seed_secret } = req.body;
     if (seed_secret !== process.env.SEED_SECRET) {
       return res.status(403).json({ error: 'Clave secreta para el seed incorrecta.' });
     }
 
-    await sequelize.authenticate();
-
     // 1. Crear Roles
     const rolesACrear = Object.values(ROLES).map(rol => ({ nombre: rol }));
-    await Rol.bulkCreate(rolesACrear, { ignoreDuplicates: true });
+    await Rol.bulkCreate(rolesACrear, { ignoreDuplicates: true, transaction: t });
 
     // 2. Crear Plan
     const [planInicial] = await Plan.findOrCreate({
@@ -28,7 +27,8 @@ const ejecutarSeed = async (req, res) => {
         precioMensual: 0,
         maxSucursales: 10,
         maxUsuarios: 10
-      }
+      },
+      transaction: t
     });
 
     // 3. Crear Empresa de prueba
@@ -37,7 +37,8 @@ const ejecutarSeed = async (req, res) => {
         defaults: {
             rut: '77.777.777-7',
             plan_id: planInicial.id
-        }
+        },
+        transaction: t
     });
 
     // 4. Crear Sucursal de prueba
@@ -45,7 +46,8 @@ const ejecutarSeed = async (req, res) => {
         where: { nombre: 'Local Principal', empresa_id: empresaTest.id },
         defaults: {
             direccion: 'Av. Siempre Viva 123'
-        }
+        },
+        transaction: t
     });
 
     // 5. Crear Usuario Administrador del Sistema
@@ -56,20 +58,26 @@ const ejecutarSeed = async (req, res) => {
         nombre: 'Javier Admin',
         password: hashedPassword,
         activo: true
-      }
+      },
+      transaction: t
     });
 
     // 6. Asignar Rol de ADMIN_SISTEMA
-    if (created) {
-      const rolAdminSistema = await Rol.findOne({ where: { nombre: ROLES.ADMIN_SISTEMA } });
-      if (rolAdminSistema) {
-        await admin.addRol(rolAdminSistema);
-      }
+    const rolAdminSistema = await Rol.findOne({ where: { nombre: ROLES.ADMIN_SISTEMA }, transaction: t });
+    if (rolAdminSistema) {
+      // setRoles reemplaza todos los roles. Usamos addRol para asegurar que lo tenga.
+      // Para un seed limpio, setRoles es seguro.
+      await admin.setRoles([rolAdminSistema], { transaction: t });
+    } else {
+      // Esto no debería pasar si el paso 1 funciona
+      throw new Error('El rol ADMIN_SISTEMA no se pudo encontrar o crear.');
     }
     
+    await t.commit();
     res.status(200).json({ mensaje: '✅ Seed ejecutado: Roles, Plan, Empresa y Sucursal de prueba creados o verificados.' });
 
   } catch (error) {
+    await t.rollback();
     console.error('❌ Error en el endpoint de seed:', error);
     return res.status(500).json({ error: 'Error interno al ejecutar el seed.' });
   }
