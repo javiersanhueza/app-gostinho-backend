@@ -1,46 +1,20 @@
 const Usuario = require('../models/usuario.model');
-const Empresa = require('../models/empresa.model'); // Sustituye a Restaurante según tu nuevo modelo
+const Empresa = require('../models/empresa.model');
+const Rol = require('../models/rol.model');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-/**
- * @swagger
- * /auth/login:
- *   post:
- *     summary: Iniciar sesión en el sistema
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 example: admin@gostinho.cl
- *               password:
- *                 type: string
- *                 example: admin123
- *     responses:
- *       200:
- *         description: Login exitoso
- *       401:
- *         description: Contraseña incorrecta
- *       404:
- *         description: Usuario no encontrado
- */
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Sequelize: findOne con relación a Empresa (antes Restaurante)
+    // Ahora incluimos la relación con Roles
     const usuario = await Usuario.findOne({
       where: { email },
-      include: [{ model: Empresa, as: 'empresa' }]
+      include: [
+        { model: Empresa, as: 'empresa' },
+        { model: Rol, as: 'roles', attributes: ['nombre'], through: { attributes: [] } } // Traemos solo el nombre del rol
+      ]
     });
 
     if (!usuario) {
@@ -51,31 +25,33 @@ const login = async (req, res) => {
       return res.status(403).json({ error: 'El usuario ha sido desactivado' });
     }
 
-    // Validación de suscripción multitenant
-    if (usuario.empresa && usuario.empresa.suscripcionActiva === false) {
-      return res.status(403).json({
-        error: 'Suscripción inactiva. Por favor, contacta a soporte.'
-      });
+    if (usuario.empresa && !usuario.empresa.suscripcionActiva) {
+      return res.status(403).json({ error: 'Suscripción inactiva. Contacta a soporte.' });
     }
 
     const passwordValida = await bcrypt.compare(password, usuario.password);
-
     if (!passwordValida) {
       return res.status(401).json({ error: 'Contraseña incorrecta' });
     }
 
+    // Extraemos los nombres de los roles a un array de strings
+    const roles = usuario.roles.map(rol => rol.nombre);
+
+    // Creamos el nuevo payload con el array de roles
     const payload = {
       id: usuario.id,
-      rol: usuario.rol,
-      empresa_id: usuario.empresa_id
+      roles: roles, // Ej: ["ADMIN_EMPRESA", "CAJERO"]
+      empresa_id: usuario.empresa_id,
+      sucursal_id: usuario.sucursal_id
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: '8h'
-    });
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
 
+    // Preparamos la respuesta para el frontend
     const usuarioData = usuario.toJSON();
     delete usuarioData.password;
+    // Reemplazamos el objeto complejo de roles por el array simple de strings
+    usuarioData.roles = roles;
 
     res.json({
       mensaje: 'Login exitoso',

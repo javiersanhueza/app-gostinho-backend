@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 const Empresa = require('./empresa.model');
 const Sucursal = require('./sucursal.model');
-const ROLES = require('../config/roles');
+const Rol = require('./rol.model');
 
 const Usuario = sequelize.define('Usuario', {
   id: {
@@ -27,24 +27,13 @@ const Usuario = sequelize.define('Usuario', {
     type: DataTypes.STRING(255),
     allowNull: false
   },
-  rol: {
-    type: DataTypes.STRING,
-    defaultValue: ROLES.CAJERO,
-    validate: {
-      isIn: {
-        args: [Object.values(ROLES)],
-        msg: "El rol especificado no es válido"
-      }
-    }
-  },
   activo: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   },
-  // Relaciones
   empresa_id: {
     type: DataTypes.UUID,
-    allowNull: true, // NULL si es ADMIN_SISTEMA
+    allowNull: true,
     references: {
       model: 'empresas',
       key: 'id'
@@ -52,7 +41,7 @@ const Usuario = sequelize.define('Usuario', {
   },
   sucursal_id: {
     type: DataTypes.UUID,
-    allowNull: true, // NULL si es ADMIN_SISTEMA o ADMIN_LOCAL (dueño de empresa)
+    allowNull: true,
     references: {
       model: 'sucursales',
       key: 'id'
@@ -65,7 +54,28 @@ const Usuario = sequelize.define('Usuario', {
   updatedAt: 'updated_at'
 });
 
-// Definición de Asociaciones
+// --- NUEVA RELACIÓN MUCHOS A MUCHOS ---
+const UsuarioRoles = sequelize.define('usuario_roles', {
+  usuario_id: {
+    type: DataTypes.UUID,
+    references: {
+      model: Usuario,
+      key: 'id'
+    }
+  },
+  rol_id: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: Rol,
+      key: 'id'
+    }
+  }
+}, { timestamps: false });
+
+Usuario.belongsToMany(Rol, { through: UsuarioRoles, foreignKey: 'usuario_id', as: 'roles' });
+Rol.belongsToMany(Usuario, { through: UsuarioRoles, foreignKey: 'rol_id', as: 'usuarios' });
+
+// --- Relaciones Anteriores ---
 Usuario.belongsTo(Empresa, { foreignKey: 'empresa_id', as: 'empresa' });
 Usuario.belongsTo(Sucursal, { foreignKey: 'sucursal_id', as: 'sucursal' });
 
