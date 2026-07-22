@@ -1,5 +1,7 @@
 const sequelize = require('../config/db');
 const Plan = require('../models/plan.model');
+const Empresa = require('../models/empresa.model');
+const Sucursal = require('../models/sucursal.model');
 const Usuario = require('../models/usuario.model');
 const Rol = require('../models/rol.model');
 const bcrypt = require('bcryptjs');
@@ -12,16 +14,14 @@ const ejecutarSeed = async (req, res) => {
       return res.status(403).json({ error: 'Clave secreta para el seed incorrecta.' });
     }
 
-    // --- Lógica de Seed Actualizada ---
     await sequelize.authenticate();
 
-    // 1. Crear todos los roles en la tabla Roles si no existen
+    // 1. Crear Roles
     const rolesACrear = Object.values(ROLES).map(rol => ({ nombre: rol }));
     await Rol.bulkCreate(rolesACrear, { ignoreDuplicates: true });
-    console.log('Roles maestros creados o verificados.');
 
-    // 2. Crear plan por defecto
-    await Plan.findOrCreate({
+    // 2. Crear Plan
+    const [planInicial] = await Plan.findOrCreate({
       where: { nombre: 'Plan Inicial' },
       defaults: {
         descripcion: 'Plan básico para pruebas',
@@ -31,7 +31,24 @@ const ejecutarSeed = async (req, res) => {
       }
     });
 
-    // 3. Crear el usuario administrador
+    // 3. Crear Empresa de prueba
+    const [empresaTest] = await Empresa.findOrCreate({
+        where: { nombre: 'Gostinho Corp' },
+        defaults: {
+            rut: '77.777.777-7',
+            plan_id: planInicial.id
+        }
+    });
+
+    // 4. Crear Sucursal de prueba
+    await Sucursal.findOrCreate({
+        where: { nombre: 'Local Principal', empresa_id: empresaTest.id },
+        defaults: {
+            direccion: 'Av. Siempre Viva 123'
+        }
+    });
+
+    // 5. Crear Usuario Administrador del Sistema
     const hashedPassword = await bcrypt.hash('admin123', 10);
     const [admin, created] = await Usuario.findOrCreate({
       where: { email: 'admin@gostinho.cl' },
@@ -42,16 +59,15 @@ const ejecutarSeed = async (req, res) => {
       }
     });
 
-    // 4. Asignar el rol de ADMIN_SISTEMA al usuario
+    // 6. Asignar Rol de ADMIN_SISTEMA
     if (created) {
       const rolAdminSistema = await Rol.findOne({ where: { nombre: ROLES.ADMIN_SISTEMA } });
       if (rolAdminSistema) {
         await admin.addRol(rolAdminSistema);
-        return res.status(201).json({ mensaje: '✅ Usuario ADMIN_SISTEMA creado y rol asignado con éxito.' });
       }
     }
     
-    return res.status(200).json({ mensaje: 'ℹ️ El usuario administrador ya existía.' });
+    res.status(200).json({ mensaje: '✅ Seed ejecutado: Roles, Plan, Empresa y Sucursal de prueba creados o verificados.' });
 
   } catch (error) {
     console.error('❌ Error en el endpoint de seed:', error);
