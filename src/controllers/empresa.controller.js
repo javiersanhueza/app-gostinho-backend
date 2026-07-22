@@ -3,6 +3,7 @@ const Empresa = require('../models/empresa.model');
 const Plan = require('../models/plan.model');
 const Usuario = require('../models/usuario.model');
 const Sucursal = require('../models/sucursal.model');
+const Rol = require('../models/rol.model');
 const ROLES = require('../config/roles');
 
 // ... (getEmpresas se mantiene igual)
@@ -37,59 +38,44 @@ const getEmpresas = async (req, res) => {
   }
 };
 
-/**
- * @swagger
- * /empresas/{id}:
- *   get:
- *     summary: Obtener el detalle completo de una empresa
- *     tags: [Empresas]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Detalle de la empresa con contadores y administrador.
- *       404:
- *         description: Empresa no encontrada.
- */
 const getEmpresaById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 1. Obtener los datos de la empresa y su plan
-    const empresa = await Empresa.findByPk(id, {
+    const empresaPromise = Empresa.findByPk(id, {
       include: { model: Plan, as: 'plan' }
     });
+
+    const totalSucursalesPromise = Sucursal.count({ where: { empresa_id: id } });
+    const totalUsuariosPromise = Usuario.count({ where: { empresa_id: id } });
+
+    // --- Consulta Corregida ---
+    const adminEmpresaPromise = Usuario.findOne({
+      where: { empresa_id: id },
+      include: [{
+        model: Rol,
+        as: 'roles',
+        where: { nombre: ROLES.ADMIN_EMPRESA }
+      }],
+      attributes: ['id', 'nombre', 'email', 'activo']
+    });
+
+    const [empresa, totalSucursales, totalUsuarios, adminEmpresa] = await Promise.all([
+        empresaPromise,
+        totalSucursalesPromise,
+        totalUsuariosPromise,
+        adminEmpresaPromise
+    ]);
 
     if (!empresa) {
       return res.status(404).json({ error: 'Empresa no encontrada' });
     }
 
-    // 2. Contar sucursales y usuarios
-    const totalSucursales = await Sucursal.count({ where: { empresa_id: id } });
-    const totalUsuarios = await Usuario.count({ where: { empresa_id: id } });
-
-    // 3. Encontrar al usuario administrador de esa empresa
-    const adminEmpresa = await Usuario.findOne({
-      where: {
-        empresa_id: id,
-        rol: ROLES.ADMIN_EMPRESA
-      },
-      attributes: ['id', 'nombre', 'email', 'activo']
-    });
-
-    // 4. Ensamblar la respuesta
     const response = {
       ...empresa.toJSON(),
       totalSucursales,
       totalUsuarios,
-      adminEmpresa: adminEmpresa || null // Devolver null si no se encuentra
+      adminEmpresa: adminEmpresa || null
     };
 
     res.json(response);
