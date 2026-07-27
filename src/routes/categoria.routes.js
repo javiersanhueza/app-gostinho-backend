@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { crearCategoria, obtenerCategorias } = require('../controllers/categoria.controller');
+const { crearCategoria, obtenerCategorias, actualizarCategoria, borrarCategoria, reordenarCategorias } = require('../controllers/categoria.controller');
 const { verificarRol } = require('../middlewares/auth.middleware');
 const ROLES = require('../config/roles');
 
@@ -12,5 +12,8 @@ const rolesTodos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA, ROLES.ADMIN_SUCURS
 
 router.post('/', verificarRol(rolesCrear), crearCategoria);
 router.get('/', verificarRol(rolesTodos), obtenerCategorias);
+router.put('/reordenar', verificarRol(rolesCrear), reordenarCategorias);
+router.put('/:id', verificarRol(rolesCrear), actualizarCategoria);
+router.delete('/:id', verificarRol(rolesCrear), borrarCategoria);
 
 module.exports = router;
