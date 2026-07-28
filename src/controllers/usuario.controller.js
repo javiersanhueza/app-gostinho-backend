@@ -93,7 +93,9 @@ const obtenerUsuarios = async (req, res) => {
 
     if (nombre) whereClause.nombre = { [Op.like]: `%${nombre}%` };
     if (email) whereClause.email = { [Op.like]: `%${email}%` };
-    if (activo !== undefined) whereClause.activo = (activo === 'true');
+    if (activo !== undefined && activo !== 'undefined' && activo !== '') {
+      whereClause.activo = (activo === 'true');
+    }
     if (rol) includeRolWhere.nombre = rol;
 
     if (creador.roles.includes(ROLES.ADMIN_EMPRESA)) {
