@@ -26,8 +26,12 @@ const crearItem = (model) => async (req, res) => {
 
 const obtenerItems = (model) => async (req, res) => {
   try {
+    const whereClause = { empresa_id: req.usuario.empresa_id };
+    if (req.query.todas !== 'true') {
+      whereClause.activo = true;
+    }
     const items = await model.findAll({
-      where: { empresa_id: req.usuario.empresa_id, activo: true }
+      where: whereClause
     });
     res.json({ data: items });
   } catch (error) {
