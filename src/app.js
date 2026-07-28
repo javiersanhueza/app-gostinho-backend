@@ -22,6 +22,7 @@ const grupoOpcionesRoutes = require('./routes/grupo_opciones.routes');
 const seedRoutes = require('./routes/seed.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const profileRoutes = require('./routes/profile.routes');
+const menuRoutes = require('./routes/menu.routes');
 
 const app = express();
 
@@ -83,6 +84,7 @@ app.use('/api/v1/productos', productoRoutes);
 app.use('/api/v1/ordenes', ordenRoutes);
 app.use('/api/v1/variantes', varianteRoutes);
 app.use('/api/v1/comandas', comandaRoutes);
+app.use('/api/v1/menu/public', menuRoutes);
 app.use('/api/v1', ingredientesRoutes);
 app.use('/api/v1', grupoOpcionesRoutes);
 app.use('/api/v1/seed', seedRoutes);
