@@ -1,12 +1,15 @@
-const Endulzante = require('./src/models/endulzante.model');
+const Producto = require('./src/models/producto.model');
+const PromocionItem = require('./src/models/promocion_item.model');
 
 async function syncDb() {
   try {
-    await Endulzante.sync({ alter: true });
-    console.log('Endulzante table synced successfully.');
+    await Producto.sync({ alter: true });
+    console.log('Producto table synced successfully.');
+    await PromocionItem.sync({ alter: true });
+    console.log('PromocionItem table synced successfully.');
     process.exit(0);
   } catch (err) {
-    console.error('Error syncing Endulzante:', err);
+    console.error('Error syncing:', err);
     process.exit(1);
   }
 }

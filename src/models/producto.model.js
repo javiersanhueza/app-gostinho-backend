@@ -25,6 +25,10 @@ const Producto = sequelize.define('Producto', {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   },
+  es_combo: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
   categoria_id: {
     type: DataTypes.UUID,
     allowNull: true,
