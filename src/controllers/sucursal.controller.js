@@ -108,9 +108,21 @@ const createSucursal = async (req, res) => {
        empresa_id_asignar = empresa_id;
     }
 
-    const empresa = await Empresa.findByPk(empresa_id_asignar);
+    const empresa = await Empresa.findByPk(empresa_id_asignar, {
+      include: [{ model: require('../models/plan.model'), as: 'plan' }]
+    });
+
     if (!empresa) {
         return res.status(404).json({ error: 'Empresa no encontrada' });
+    }
+
+    if (empresa.plan) {
+      const sucursalesActuales = await Sucursal.count({ where: { empresa_id: empresa_id_asignar } });
+      if (sucursalesActuales >= empresa.plan.maxSucursales) {
+        return res.status(403).json({ 
+          mensaje: `Has alcanzado el límite máximo de sucursales (${empresa.plan.maxSucursales}) permitidas por tu plan.` 
+        });
+      }
     }
 
     const nuevaSucursal = await Sucursal.create({
