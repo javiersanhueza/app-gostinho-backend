@@ -19,7 +19,7 @@ const login = async (req, res) => {
     });
 
     if (!usuario) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+      return res.status(401).json({ error: 'Usuario o contraseña incorrecta' });
     }
 
     if (!usuario.activo) {
@@ -32,13 +32,12 @@ const login = async (req, res) => {
 
     const passwordValida = await bcrypt.compare(password, usuario.password);
     if (!passwordValida) {
-      return res.status(401).json({ error: 'Contraseña incorrecta' });
+      return res.status(401).json({ error: 'Usuario o contraseña incorrecta' });
     }
 
     // Extraemos los nombres de los roles a un array de strings
     const roles = usuario.roles.map(rol => rol.nombre);
 
-    // Creamos el nuevo payload con el array de roles
     const payload = {
       id: usuario.id,
       roles: roles, // Ej: ["ADMIN_EMPRESA", "CAJERO"]
