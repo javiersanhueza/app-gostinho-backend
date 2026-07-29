@@ -6,10 +6,10 @@ const PromocionItem = require('../models/promocion_item.model');
 
 const obtenerMenuPublico = async (req, res) => {
   try {
-    const { sucursal_id } = req.params;
+    const { slug } = req.params;
 
     // 1. Obtener la sucursal para saber a qué empresa pertenece
-    const sucursal = await Sucursal.findOne({ where: { id: sucursal_id, activo: true } });
+    const sucursal = await Sucursal.findOne({ where: { slug: slug, activo: true } });
     
     if (!sucursal) {
       return res.status(404).json({ error: 'Sucursal no encontrada o inactiva' });

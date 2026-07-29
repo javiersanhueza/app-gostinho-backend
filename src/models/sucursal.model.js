@@ -12,6 +12,11 @@ const Sucursal = sequelize.define('Sucursal', {
     type: DataTypes.STRING(255),
     allowNull: false
   },
+  slug: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    unique: true
+  },
   direccion: {
     type: DataTypes.STRING(255),
     allowNull: true

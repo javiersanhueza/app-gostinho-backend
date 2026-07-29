@@ -125,8 +125,19 @@ const createSucursal = async (req, res) => {
       }
     }
 
+    // Generar un slug base a partir del nombre
+    let baseSlug = nombre.toLowerCase().trim()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quitar acentos
+      .replace(/[^a-z0-9]+/g, '-') // reemplazar caracteres especiales y espacios por guiones
+      .replace(/^-+|-+$/g, ''); // quitar guiones iniciales o finales
+
+    // Añadir un sufijo aleatorio para evitar colisiones (idealmente se validaría contra la BD)
+    const suffix = Math.random().toString(36).substring(2, 6);
+    const slug = `${baseSlug}-${suffix}`;
+
     const nuevaSucursal = await Sucursal.create({
       nombre,
+      slug,
       direccion,
       activo: activo !== undefined ? activo : true,
       empresa_id: empresa_id_asignar
@@ -154,6 +165,15 @@ const updateSucursal = async (req, res) => {
     const dataActualizar = { ...req.body };
     if (creador.rol === ROLES.ADMIN_EMPRESA) {
        delete dataActualizar.empresa_id; 
+    }
+
+    if (dataActualizar.nombre) {
+      let baseSlug = dataActualizar.nombre.toLowerCase().trim()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quitar acentos
+        .replace(/[^a-z0-9]+/g, '-') // reemplazar caracteres especiales y espacios por guiones
+        .replace(/^-+|-+$/g, ''); // quitar guiones iniciales o finales
+      const suffix = Math.random().toString(36).substring(2, 6);
+      dataActualizar.slug = `${baseSlug}-${suffix}`;
     }
 
     await Sucursal.update(dataActualizar, { where: { id } });
