@@ -24,6 +24,7 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 const profileRoutes = require('./routes/profile.routes');
 const menuRoutes = require('./routes/menu.routes');
 const miEmpresaRoutes = require('./routes/mi-empresa.routes');
+const gastosRoutes = require('./routes/gastos.routes');
 
 const app = express();
 
@@ -92,6 +93,7 @@ app.use('/api/v1/seed', seedRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/profile', profileRoutes); // Nueva ruta para el perfil
 app.use('/api/v1/mi-empresa', miEmpresaRoutes);
+app.use('/api/v1', gastosRoutes);
 
 app.use((req, res, next) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
