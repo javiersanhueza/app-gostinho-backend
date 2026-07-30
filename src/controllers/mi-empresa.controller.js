@@ -1,4 +1,4 @@
-const { Empresa } = require('../models');
+const Empresa = require('../models/empresa.model');
 const { upload } = require('../config/cloudinary');
 
 // Subir o actualizar el logo de la empresa
