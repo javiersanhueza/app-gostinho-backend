@@ -1,4 +1,5 @@
 const Empresa = require('../models/empresa.model');
+const Plan = require('../models/plan.model');
 const { upload } = require('../config/cloudinary');
 
 // Subir o actualizar el logo de la empresa
@@ -44,7 +45,9 @@ const getMiEmpresa = async (req, res) => {
     const empresaId = req.usuario.empresa_id;
     if (!empresaId) return res.status(403).json({ error: 'No tiene empresa asignada.' });
 
-    const empresa = await Empresa.findByPk(empresaId);
+    const empresa = await Empresa.findByPk(empresaId, {
+      include: [{ model: Plan, as: 'plan' }]
+    });
     if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada.' });
 
     res.json({ data: empresa });
