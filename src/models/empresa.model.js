@@ -26,6 +26,10 @@ const Empresa = sequelize.define('Empresa', {
     type: DataTypes.DATE,
     allowNull: true
   },
+  logo_url: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   plan_id: {
     type: DataTypes.UUID,
     allowNull: true,
