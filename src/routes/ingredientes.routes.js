@@ -3,7 +3,8 @@ const {
   crearSabor, obtenerSabores, actualizarSabor, borrarSabor,
   crearFruta, obtenerFrutas, actualizarFruta, borrarFruta,
   crearTopping, obtenerToppings, actualizarTopping, borrarTopping,
-  crearEndulzante, obtenerEndulzantes, actualizarEndulzante, borrarEndulzante
+  crearEndulzante, obtenerEndulzantes, actualizarEndulzante, borrarEndulzante,
+  crearSalsa, obtenerSalsas, actualizarSalsa, borrarSalsa
 } = require('../controllers/ingredientes.controller');
 const { verificarRol } = require('../middlewares/auth.middleware');
 const ROLES = require('../config/roles');
@@ -35,5 +36,11 @@ router.post('/endulzantes', verificarRol(rolesAdmin), crearEndulzante);
 router.get('/endulzantes', verificarRol(rolesTodos), obtenerEndulzantes);
 router.put('/endulzantes/:id', verificarRol(rolesAdmin), actualizarEndulzante);
 router.delete('/endulzantes/:id', verificarRol(rolesAdmin), borrarEndulzante);
+
+// Rutas para Salsas
+router.post('/salsas', verificarRol(rolesAdmin), crearSalsa);
+router.get('/salsas', verificarRol(rolesTodos), obtenerSalsas);
+router.put('/salsas/:id', verificarRol(rolesAdmin), actualizarSalsa);
+router.delete('/salsas/:id', verificarRol(rolesAdmin), borrarSalsa);
 
 module.exports = router;

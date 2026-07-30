@@ -65,7 +65,7 @@ const Variante = require('../models/variante.model');
  */
 const crearProducto = async (req, res) => {
   try {
-    const { nombre, descripcion, categoria_id, es_combo, sucursal_id } = req.body;
+    const { nombre, descripcion, categoria_id, es_combo, sucursal_id, opcion_endulzante } = req.body;
 
     if (!sucursal_id) {
       return res.status(400).json({ error: 'sucursal_id es requerido' });
@@ -84,7 +84,8 @@ const crearProducto = async (req, res) => {
       descripcion,
       categoria_id: categoria_id || null,
       sucursal_id,
-      es_combo: es_combo || false
+      es_combo: es_combo || false,
+      opcion_endulzante: opcion_endulzante || false
     });
 
     res.status(201).json({ data: nuevoProducto });
@@ -175,4 +176,60 @@ const eliminarItemPromo = async (req, res) => {
   }
 };
 
-module.exports = { crearProducto, obtenerProductos, agregarItemPromo, eliminarItemPromo };
+const actualizarProducto = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sucursal_id } = req.query;
+    const { nombre, descripcion, categoria_id, activo, es_combo, opcion_endulzante } = req.body;
+
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'sucursal_id es requerido' });
+    }
+
+    const producto = await Producto.findOne({ where: { id, sucursal_id } });
+    if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+
+    if (categoria_id) {
+       const categoria = await Categoria.findOne({ where: { id: categoria_id, sucursal_id }});
+       if (!categoria) {
+           return res.status(400).json({ error: 'La categoría no existe o no pertenece a esta sucursal' });
+       }
+    }
+
+    await producto.update({
+      nombre: nombre !== undefined ? nombre : producto.nombre,
+      descripcion: descripcion !== undefined ? descripcion : producto.descripcion,
+      categoria_id: categoria_id !== undefined ? categoria_id : producto.categoria_id,
+      activo: activo !== undefined ? activo : producto.activo,
+      es_combo: es_combo !== undefined ? es_combo : producto.es_combo,
+      opcion_endulzante: opcion_endulzante !== undefined ? opcion_endulzante : producto.opcion_endulzante
+    });
+
+    res.json({ data: producto, mensaje: 'Producto actualizado con éxito' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar el producto' });
+  }
+};
+
+const eliminarProducto = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sucursal_id } = req.query;
+
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'sucursal_id es requerido' });
+    }
+
+    const producto = await Producto.findOne({ where: { id, sucursal_id } });
+    if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+
+    await producto.destroy();
+    res.json({ mensaje: 'Producto eliminado con éxito' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al eliminar el producto' });
+  }
+};
+
+module.exports = { crearProducto, obtenerProductos, agregarItemPromo, eliminarItemPromo, actualizarProducto, eliminarProducto };

@@ -1,123 +1,49 @@
 const Variante = require('../models/variante.model');
 const Producto = require('../models/producto.model');
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     Variante:
- *       type: object
- *       required:
- *         - nombre
- *         - precio
- *         - producto_id
- *       properties:
- *         id:
- *           type: string
- *           format: uuid
- *         nombre:
- *           type: string
- *           description: Ej Normal, Grande, Familiar
- *         precio:
- *           type: integer
- *         stock:
- *           type: boolean
- *         producto_id:
- *           type: string
- *           format: uuid
- * 
- * tags:
- *   name: Variantes
- *   description: Gestión de precios y tamaños de productos
- */
-
-/**
- * @swagger
- * /variantes:
- *   post:
- *     summary: Crear una variante (tamaño/precio) para un producto
- *     tags: [Variantes]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - nombre
- *               - precio
- *               - producto_id
- *             properties:
- *               nombre:
- *                 type: string
- *               precio:
- *                 type: integer
- *               stock:
- *                 type: boolean
- *               producto_id:
- *                 type: string
- *                 format: uuid
- *     responses:
- *       201:
- *         description: Variante creada
- */
 const crearVariante = async (req, res) => {
   try {
-    const { nombre, precio, stock, producto_id } = req.body;
-    const creador = req.usuario;
+    const { nombre, precio, stock, producto_id, max_sabores, max_frutas, max_toppings_gratis, max_toppings_pago, max_salsas } = req.body;
+    const { sucursal_id } = req.query;
 
-    // Verificar que el producto pertenece a la empresa del usuario
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'sucursal_id es requerido' });
+    }
+
     const producto = await Producto.findOne({ 
-      where: { id: producto_id, empresa_id: creador.empresa_id } 
+      where: { id: producto_id, sucursal_id } 
     });
 
     if (!producto) {
-      return res.status(404).json({ error: 'Producto no encontrado en tu empresa' });
+      return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
     const nuevaVariante = await Variante.create({
       nombre,
       precio,
       stock: stock !== undefined ? stock : true,
+      max_sabores, max_frutas, max_toppings_gratis, max_toppings_pago, max_salsas,
       producto_id
     });
 
-    res.status(201).json({ data: nuevaVariante });
+    res.status(201).json({ data: nuevaVariante, mensaje: 'Variante creada con éxito' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al crear la variante' });
   }
 };
 
-/**
- * @swagger
- * /productos/{producto_id}/variantes:
- *   get:
- *     summary: Obtener todas las variantes de un producto específico
- *     tags: [Variantes]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: producto_id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Lista de variantes (precios) del producto
- */
 const obtenerVariantesPorProducto = async (req, res) => {
   try {
     const { producto_id } = req.params;
-    
-    // Aquí no filtramos por empresa_id directamente en Variante, 
-    // porque el producto ya está aislado, pero es buena práctica verificar el producto primero.
+    const { sucursal_id } = req.query;
+
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'sucursal_id es requerido' });
+    }
+
     const producto = await Producto.findOne({ 
-        where: { id: producto_id, empresa_id: req.usuario.empresa_id } 
+        where: { id: producto_id, sucursal_id } 
     });
 
     if (!producto) {
@@ -135,4 +61,71 @@ const obtenerVariantesPorProducto = async (req, res) => {
   }
 };
 
-module.exports = { crearVariante, obtenerVariantesPorProducto };
+const actualizarVariante = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sucursal_id } = req.query;
+    const { nombre, precio, stock, max_sabores, max_frutas, max_toppings_gratis, max_toppings_pago, max_salsas } = req.body;
+
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'sucursal_id es requerido' });
+    }
+
+    const variante = await Variante.findOne({
+      where: { id },
+      include: [{
+        model: Producto,
+        as: 'producto',
+        where: { sucursal_id }
+      }]
+    });
+
+    if (!variante) return res.status(404).json({ error: 'Variante no encontrada' });
+
+    await variante.update({
+      nombre: nombre !== undefined ? nombre : variante.nombre,
+      precio: precio !== undefined ? precio : variante.precio,
+      stock: stock !== undefined ? stock : variante.stock,
+      max_sabores: max_sabores !== undefined ? max_sabores : variante.max_sabores,
+      max_frutas: max_frutas !== undefined ? max_frutas : variante.max_frutas,
+      max_toppings_gratis: max_toppings_gratis !== undefined ? max_toppings_gratis : variante.max_toppings_gratis,
+      max_toppings_pago: max_toppings_pago !== undefined ? max_toppings_pago : variante.max_toppings_pago,
+      max_salsas: max_salsas !== undefined ? max_salsas : variante.max_salsas,
+    });
+
+    res.json({ data: variante, mensaje: 'Variante actualizada con éxito' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar la variante' });
+  }
+};
+
+const eliminarVariante = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sucursal_id } = req.query;
+
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'sucursal_id es requerido' });
+    }
+
+    const variante = await Variante.findOne({
+      where: { id },
+      include: [{
+        model: Producto,
+        as: 'producto',
+        where: { sucursal_id }
+      }]
+    });
+
+    if (!variante) return res.status(404).json({ error: 'Variante no encontrada' });
+
+    await variante.destroy();
+    res.json({ mensaje: 'Variante eliminada con éxito' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al eliminar la variante' });
+  }
+};
+
+module.exports = { crearVariante, obtenerVariantesPorProducto, actualizarVariante, eliminarVariante };

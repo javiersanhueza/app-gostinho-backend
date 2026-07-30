@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { crearVariante, obtenerVariantesPorProducto } = require('../controllers/variante.controller');
+const { crearVariante, obtenerVariantesPorProducto, actualizarVariante, eliminarVariante } = require('../controllers/variante.controller');
 const { verificarRol } = require('../middlewares/auth.middleware');
 const ROLES = require('../config/roles');
 
@@ -10,10 +10,10 @@ const rolesTodos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA, ROLES.ADMIN_SUCURS
 
 // El post va a /api/v1/variantes
 router.post('/', verificarRol(rolesCrear), crearVariante);
+router.put('/:id', verificarRol(rolesCrear), actualizarVariante);
+router.delete('/:id', verificarRol(rolesCrear), eliminarVariante);
 
-// El get usa un sub-enrutamiento desde productos, pero lo registramos aquí para mantener orden.
-// Se llamará desde app.js como: app.use('/api/v1', varianteRoutes)
-// pero la ruta real para el GET será /productos/:producto_id/variantes
+// El get usa un sub-enrutamiento desde productos
 router.get('/productos/:producto_id/variantes', verificarRol(rolesTodos), obtenerVariantesPorProducto);
 
 module.exports = router;

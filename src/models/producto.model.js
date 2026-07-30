@@ -29,6 +29,10 @@ const Producto = sequelize.define('Producto', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  opcion_endulzante: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
   categoria_id: {
     type: DataTypes.UUID,
     allowNull: true,

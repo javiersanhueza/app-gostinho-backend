@@ -39,6 +39,10 @@ const Variante = sequelize.define('Variante', {
     type: DataTypes.INTEGER,
     defaultValue: 99 // Un número alto para no limitar por defecto
   },
+  max_salsas: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
   producto_id: {
     type: DataTypes.UUID,
     allowNull: false,

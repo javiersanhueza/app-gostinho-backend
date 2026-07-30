@@ -15,4 +15,9 @@ router.get('/', verificarRol(rolesTodos), obtenerProductos);
 router.post('/:id/promociones', verificarRol(rolesCrear), agregarItemPromo);
 router.delete('/:id/promociones/:itemId', verificarRol(rolesCrear), eliminarItemPromo);
 
+// Modificación de Producto completo
+const { actualizarProducto, eliminarProducto } = require('../controllers/producto.controller');
+router.put('/:id', verificarRol(rolesCrear), actualizarProducto);
+router.delete('/:id', verificarRol(rolesCrear), eliminarProducto);
+
 module.exports = router;

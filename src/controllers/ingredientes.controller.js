@@ -2,6 +2,7 @@ const Sabor = require('../models/sabor.model');
 const Fruta = require('../models/fruta.model');
 const Topping = require('../models/topping.model');
 const Endulzante = require('../models/endulzante.model');
+const Salsa = require('../models/salsa.model');
 
 const crearItem = (model) => async (req, res) => {
   try {
@@ -93,5 +94,10 @@ module.exports = {
   crearEndulzante: crearItem(Endulzante),
   obtenerEndulzantes: obtenerItems(Endulzante),
   actualizarEndulzante: actualizarItem(Endulzante),
-  borrarEndulzante: borrarItem(Endulzante)
+  borrarEndulzante: borrarItem(Endulzante),
+
+  crearSalsa: crearItem(Salsa),
+  obtenerSalsas: obtenerItems(Salsa),
+  actualizarSalsa: actualizarItem(Salsa),
+  borrarSalsa: borrarItem(Salsa)
 };
