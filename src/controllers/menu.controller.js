@@ -59,7 +59,8 @@ const obtenerMenuPublico = async (req, res) => {
         sucursal: {
           id: sucursal.id,
           nombre: sucursal.nombre,
-          direccion: sucursal.direccion
+          direccion: sucursal.direccion,
+          empresa: sucursal.empresa
         },
         categorias: categoriasConProductos
       }
