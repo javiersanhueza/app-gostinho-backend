@@ -34,8 +34,8 @@ const uploadLogo = async (req, res) => {
       logo_url: logoUrl
     });
   } catch (error) {
-    console.error('Error al subir logo:', error);
-    res.status(500).json({ error: 'Error interno al procesar el logo' });
+    console.error('Error al subir logo:', error.message || error, error.stack);
+    res.status(500).json({ error: 'Error interno al procesar el logo', details: error.message });
   }
 };
 
