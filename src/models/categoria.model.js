@@ -20,11 +20,11 @@ const Categoria = sequelize.define('Categoria', {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   },
-  empresa_id: {
+  sucursal_id: {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'empresas',
+      model: 'sucursales',
       key: 'id'
     }
   }
@@ -35,8 +35,10 @@ const Categoria = sequelize.define('Categoria', {
   updatedAt: 'updated_at'
 });
 
+const Sucursal = require('./sucursal.model');
+
 // Relaciones
-Categoria.belongsTo(Empresa, { foreignKey: 'empresa_id', as: 'empresa' });
-Empresa.hasMany(Categoria, { foreignKey: 'empresa_id', as: 'categorias' });
+Categoria.belongsTo(Sucursal, { foreignKey: 'sucursal_id', as: 'sucursal' });
+Sucursal.hasMany(Categoria, { foreignKey: 'sucursal_id', as: 'categorias' });
 
 module.exports = Categoria;

@@ -15,12 +15,10 @@ const obtenerMenuPublico = async (req, res) => {
       return res.status(404).json({ error: 'Sucursal no encontrada o inactiva' });
     }
 
-    const empresa_id = sucursal.empresa_id;
-
-    // 2. Obtener todas las categorías de la empresa que tengan productos activos
+    // 2. Obtener todas las categorías de la sucursal que tengan productos activos
     // Para facilitar la navegación (agrupado por categoría), buscaremos primero las categorías
     const categorias = await Categoria.findAll({
-      where: { empresa_id },
+      where: { sucursal_id: sucursal.id },
       order: [['orden', 'ASC'], ['nombre', 'ASC']],
       include: [
         {

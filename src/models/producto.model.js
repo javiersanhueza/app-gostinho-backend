@@ -37,11 +37,11 @@ const Producto = sequelize.define('Producto', {
       key: 'id'
     }
   },
-  empresa_id: {
+  sucursal_id: {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'empresas',
+      model: 'sucursales',
       key: 'id'
     }
   }
@@ -52,9 +52,11 @@ const Producto = sequelize.define('Producto', {
   updatedAt: 'updated_at'
 });
 
+const Sucursal = require('./sucursal.model');
+
 // Relaciones
-Producto.belongsTo(Empresa, { foreignKey: 'empresa_id', as: 'empresa' });
-Empresa.hasMany(Producto, { foreignKey: 'empresa_id', as: 'productos' });
+Producto.belongsTo(Sucursal, { foreignKey: 'sucursal_id', as: 'sucursal' });
+Sucursal.hasMany(Producto, { foreignKey: 'sucursal_id', as: 'productos' });
 
 Producto.belongsTo(Categoria, { foreignKey: 'categoria_id', as: 'categoria' });
 Categoria.hasMany(Producto, { foreignKey: 'categoria_id', as: 'productos' });

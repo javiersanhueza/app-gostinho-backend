@@ -55,13 +55,16 @@ const ROLES = require('../config/roles');
  */
 const crearCategoria = async (req, res) => {
   try {
-    const { nombre, orden } = req.body;
-    const creador = req.usuario;
+    const { nombre, orden, sucursal_id } = req.body;
+
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'sucursal_id es requerido' });
+    }
 
     const nuevaCategoria = await Categoria.create({
       nombre,
       orden: orden || 10,
-      empresa_id: creador.empresa_id
+      sucursal_id
     });
 
     res.status(201).json({ data: nuevaCategoria });
@@ -84,8 +87,14 @@ const crearCategoria = async (req, res) => {
  */
 const obtenerCategorias = async (req, res) => {
   try {
+    const { sucursal_id } = req.query;
+
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'sucursal_id es requerido' });
+    }
+
     const categorias = await Categoria.findAll({
-      where: { empresa_id: req.usuario.empresa_id, activa: true },
+      where: { sucursal_id, activa: true },
       order: [['orden', 'ASC']]
     });
     res.json({ data: categorias });
@@ -106,10 +115,13 @@ const obtenerCategorias = async (req, res) => {
 const actualizarCategoria = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, orden, activa } = req.body;
-    const empresa_id = req.usuario.empresa_id;
+    const { nombre, orden, activa, sucursal_id } = req.body;
 
-    const categoria = await Categoria.findOne({ where: { id, empresa_id } });
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'sucursal_id es requerido' });
+    }
+
+    const categoria = await Categoria.findOne({ where: { id, sucursal_id } });
     if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
 
     await categoria.update({ nombre, orden, activa });
@@ -131,9 +143,13 @@ const actualizarCategoria = async (req, res) => {
 const borrarCategoria = async (req, res) => {
   try {
     const { id } = req.params;
-    const empresa_id = req.usuario.empresa_id;
+    const { sucursal_id } = req.query;
 
-    const categoria = await Categoria.findOne({ where: { id, empresa_id } });
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'sucursal_id es requerido' });
+    }
+
+    const categoria = await Categoria.findOne({ where: { id, sucursal_id } });
     if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
 
     await categoria.destroy();
@@ -154,12 +170,15 @@ const borrarCategoria = async (req, res) => {
  */
 const reordenarCategorias = async (req, res) => {
   try {
-    const { categorias } = req.body; // array de { id, orden }
-    const empresa_id = req.usuario.empresa_id;
+    const { categorias, sucursal_id } = req.body; // array de { id, orden }
+
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'sucursal_id es requerido' });
+    }
 
     // Actualizar en lote
     const promesas = categorias.map(cat => 
-      Categoria.update({ orden: cat.orden }, { where: { id: cat.id, empresa_id } })
+      Categoria.update({ orden: cat.orden }, { where: { id: cat.id, sucursal_id } })
     );
 
     await Promise.all(promesas);
