@@ -2,6 +2,7 @@ const Producto = require('../models/producto.model');
 const Categoria = require('../models/categoria.model');
 const Variante = require('../models/variante.model');
 const Sucursal = require('../models/sucursal.model');
+const Empresa = require('../models/empresa.model');
 const PromocionItem = require('../models/promocion_item.model');
 
 const obtenerMenuPublico = async (req, res) => {
@@ -9,7 +10,11 @@ const obtenerMenuPublico = async (req, res) => {
     const { slug } = req.params;
 
     // 1. Obtener la sucursal para saber a qué empresa pertenece
-    const sucursal = await Sucursal.findOne({ where: { slug: slug, activo: true } });
+    const sucursal = await Sucursal.findOne({ 
+      where: { slug: slug, activo: true },
+      include: [{ model: Empresa, as: 'empresa', attributes: ['nombre', 'logo_url'] }]
+    });
+    
     
     if (!sucursal) {
       return res.status(404).json({ error: 'Sucursal no encontrada o inactiva' });
