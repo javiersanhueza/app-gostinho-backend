@@ -30,7 +30,8 @@ const obtenerMenuPublico = async (req, res) => {
             {
               model: Variante,
               as: 'variantes',
-              where: { stock: true }
+              where: { stock: true },
+              required: false
             },
             {
               model: PromocionItem,
