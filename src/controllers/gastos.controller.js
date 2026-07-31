@@ -8,7 +8,7 @@ const Sucursal = require('../models/sucursal.model');
 
 const obtenerGastos = async (req, res) => {
   try {
-    const { anio, mes, sucursal_id } = req.query;
+    const { anio, mes, sucursal_id, categoria_id } = req.query;
     const empresa_id = req.usuario.empresa_id;
     const rol = req.usuario.rol;
 
@@ -24,6 +24,11 @@ const obtenerGastos = async (req, res) => {
       } else {
         whereClause.sucursal_id = sucursal_id;
       }
+    }
+
+    // Filtro por categoría
+    if (categoria_id && categoria_id !== 'todas') {
+      whereClause.categoria_gasto_id = categoria_id;
     }
 
     // Filtro por fecha (Año y Mes)
