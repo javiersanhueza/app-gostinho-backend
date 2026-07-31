@@ -100,6 +100,39 @@ const borrarGasto = async (req, res) => {
   }
 };
 
+const actualizarGasto = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fecha, categoria_gasto_id, nombre_producto, cantidad, unidad_medida_id, monto_total, metodo_pago, tipo_recibo } = req.body;
+    
+    const gasto = await Gasto.findOne({ where: { id, empresa_id: req.usuario.empresa_id } });
+    if (!gasto) return res.status(404).json({ error: 'Gasto no encontrado' });
+
+    // Regla: Solo ADMIN_EMPRESA puede borrar/editar cualquier gasto. 
+    // CAJERO/ADMIN_SUCURSAL solo pueden editar gastos de su sucursal.
+    if (req.usuario.rol !== 'ADMIN_EMPRESA' && req.usuario.rol !== 'ADMIN_SISTEMA') {
+      if (gasto.sucursal_id !== req.usuario.sucursal_id) {
+        return res.status(403).json({ error: 'No tienes permiso para editar este gasto' });
+      }
+    }
+
+    await gasto.update({
+      fecha,
+      categoria_gasto_id,
+      nombre_producto,
+      cantidad,
+      unidad_medida_id,
+      monto_total,
+      metodo_pago,
+      tipo_recibo
+    });
+
+    res.json({ data: gasto, mensaje: 'Gasto actualizado correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: `Error al actualizar gasto: ${error.message}` });
+  }
+};
+
 
 // --- CATEGORÍAS DE GASTO ---
 
@@ -153,6 +186,7 @@ const crearUnidad = async (req, res) => {
 module.exports = {
   obtenerGastos,
   crearGastosBulk,
+  actualizarGasto,
   borrarGasto,
   obtenerCategorias,
   crearCategoria,

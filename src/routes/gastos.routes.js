@@ -2,6 +2,7 @@ const { Router } = require('express');
 const {
   obtenerGastos,
   crearGastosBulk,
+  actualizarGasto,
   borrarGasto,
   obtenerCategorias,
   crearCategoria,
@@ -18,7 +19,8 @@ const rolesTodos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA, ROLES.ADMIN_SUCURS
 // --- GASTOS ---
 // Los ADMIN_SUCURSAL también pueden registrar gastos
 router.get('/gastos', verificarRol(rolesAdmin), obtenerGastos);
-router.post('/gastos/bulk', verificarRol(rolesAdmin), crearGastosBulk);
+router.post('/gastos/bulk', verificarRol(rolesTodos), crearGastosBulk);
+router.put('/gastos/:id', verificarRol(rolesTodos), actualizarGasto);
 router.delete('/gastos/:id', verificarRol(rolesAdmin), borrarGasto);
 
 // --- CATEGORIAS DE GASTO ---
