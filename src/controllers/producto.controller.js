@@ -107,6 +107,7 @@ const obtenerProductos = async (req, res) => {
       where: { sucursal_id, activo: true },
       include: [
         { model: Categoria, as: 'categoria', attributes: ['id', 'nombre'] },
+        { model: Variante, as: 'variantes' },
         { 
           model: PromocionItem, 
           as: 'promocion_items',
