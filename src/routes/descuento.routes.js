@@ -5,15 +5,17 @@ const {
   actualizarDescuento, 
   eliminarDescuento 
 } = require('../controllers/descuento.controller');
-const { requireAuth } = require('../middlewares/auth');
+const { verificarRol } = require('../middlewares/auth.middleware');
+const ROLES = require('../config/roles');
 
 const router = express.Router();
 
-router.use(requireAuth);
+const rolesCrear = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA];
+const rolesTodos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA, ROLES.ADMIN_SUCURSAL, ROLES.CAJERO];
 
-router.post('/', crearDescuento);
-router.get('/', obtenerDescuentos);
-router.put('/:id', actualizarDescuento);
-router.delete('/:id', eliminarDescuento);
+router.post('/', verificarRol(rolesCrear), crearDescuento);
+router.get('/', verificarRol(rolesTodos), obtenerDescuentos);
+router.put('/:id', verificarRol(rolesCrear), actualizarDescuento);
+router.delete('/:id', verificarRol(rolesCrear), eliminarDescuento);
 
 module.exports = router;
