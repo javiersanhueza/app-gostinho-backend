@@ -4,6 +4,8 @@ const Variante = require('../models/variante.model');
 const Sucursal = require('../models/sucursal.model');
 const Empresa = require('../models/empresa.model');
 const PromocionItem = require('../models/promocion_item.model');
+const Descuento = require('../models/descuento.model');
+const { Op } = require('sequelize');
 
 const obtenerMenuPublico = async (req, res) => {
   try {
@@ -12,7 +14,7 @@ const obtenerMenuPublico = async (req, res) => {
     // 1. Obtener la sucursal para saber a qué empresa pertenece
     const sucursal = await Sucursal.findOne({ 
       where: { slug: slug, activo: true },
-      include: [{ model: Empresa, as: 'empresa', attributes: ['nombre', 'logo_url'] }]
+      include: [{ model: Empresa, as: 'empresa', attributes: ['id', 'nombre', 'logo_url'] }]
     });
     
     
@@ -53,6 +55,53 @@ const obtenerMenuPublico = async (req, res) => {
 
     // Filtramos las categorías que no tienen productos
     const categoriasConProductos = categorias.filter(c => c.productos && c.productos.length > 0);
+
+    // 3. Obtener descuentos activos aplicables a esta sucursal
+    const currentDate = new Date();
+    const descuentosActivos = await Descuento.findAll({
+      where: {
+        empresa_id: sucursal.empresa.id,
+        activo: true,
+        fecha_inicio: { [Op.lte]: currentDate },
+        fecha_fin: { [Op.gte]: currentDate },
+        [Op.or]: [
+          { sucursal_id: sucursal.id },
+          { aplica_todas_sucursales: true }
+        ]
+      },
+      include: [{
+        model: Producto,
+        as: 'productos',
+        attributes: ['id'],
+        through: { attributes: [] }
+      }]
+    });
+
+    // 4. Calcular el descuento máximo para cada producto y adjuntarlo
+    categoriasConProductos.forEach(categoria => {
+      categoria.productos.forEach(producto => {
+        let maxPorcentaje = 0;
+        let nombreDescuento = '';
+
+        descuentosActivos.forEach(desc => {
+          let aplica = false;
+          if (desc.aplica_a_todo) {
+            aplica = true;
+          } else if (desc.productos && desc.productos.some(p => p.id === producto.id)) {
+            aplica = true;
+          }
+
+          if (aplica && desc.porcentaje > maxPorcentaje) {
+            maxPorcentaje = desc.porcentaje;
+            nombreDescuento = desc.nombre;
+          }
+        });
+
+        if (maxPorcentaje > 0) {
+          producto.setDataValue('descuento_activo', { porcentaje: maxPorcentaje, nombre: nombreDescuento });
+        }
+      });
+    });
 
     res.json({
       data: {
