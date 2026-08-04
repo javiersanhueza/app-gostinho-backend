@@ -157,6 +157,18 @@ const obtenerCategorias = async (req, res) => {
 const crearCategoria = async (req, res) => {
   try {
     const { nombre } = req.body;
+    
+    const existente = await CategoriaGasto.findOne({
+      where: {
+        nombre,
+        empresa_id: req.usuario.empresa_id
+      }
+    });
+
+    if (existente) {
+      return res.status(200).json({ data: existente, mensaje: 'La categoría ya existe' });
+    }
+
     const nueva = await CategoriaGasto.create({ nombre, empresa_id: req.usuario.empresa_id });
     res.status(201).json({ data: nueva });
   } catch (error) {
@@ -215,6 +227,19 @@ const crearProductoGasto = async (req, res) => {
   try {
     const { nombre, categoria_gasto_id } = req.body;
     if (!categoria_gasto_id) return res.status(400).json({ error: 'Falta categoria_gasto_id' });
+    
+    const existente = await ProductoGasto.findOne({
+      where: {
+        nombre,
+        categoria_gasto_id,
+        empresa_id: req.usuario.empresa_id
+      }
+    });
+
+    if (existente) {
+      return res.status(200).json({ data: existente, mensaje: 'El producto ya existe' });
+    }
+
     const nuevo = await ProductoGasto.create({ nombre, categoria_gasto_id, empresa_id: req.usuario.empresa_id });
     res.status(201).json({ data: nuevo });
   } catch (error) {
