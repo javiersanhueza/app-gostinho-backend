@@ -104,7 +104,7 @@ const obtenerProductos = async (req, res) => {
     }
 
     const productos = await Producto.findAll({
-      where: { sucursal_id, activo: true },
+      where: { sucursal_id },
       include: [
         { model: Categoria, as: 'categoria', attributes: ['id', 'nombre'] },
         { model: Variante, as: 'variantes' },
