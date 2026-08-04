@@ -4,6 +4,7 @@ const Empresa = require('./empresa.model');
 const Sucursal = require('./sucursal.model');
 const CategoriaGasto = require('./categoria_gasto.model');
 const UnidadMedida = require('./unidad_medida.model');
+const ProductoGasto = require('./producto_gasto.model');
 
 const Gasto = sequelize.define('Gasto', {
   id: {
@@ -17,7 +18,7 @@ const Gasto = sequelize.define('Gasto', {
   },
   nombre_producto: {
     type: DataTypes.STRING(255),
-    allowNull: false
+    allowNull: true // Se cambia a true temporal/permanentemente por migracion a producto_gasto_id
   },
   cantidad: {
     type: DataTypes.DECIMAL(10, 2),
@@ -40,6 +41,14 @@ const Gasto = sequelize.define('Gasto', {
     allowNull: false,
     references: {
       model: 'categorias_gasto',
+      key: 'id'
+    }
+  },
+  producto_gasto_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'productos_gasto',
       key: 'id'
     }
   },
@@ -85,5 +94,8 @@ Empresa.hasMany(Gasto, { foreignKey: 'empresa_id', as: 'gastos' });
 
 Gasto.belongsTo(Sucursal, { foreignKey: 'sucursal_id', as: 'sucursal' });
 Sucursal.hasMany(Gasto, { foreignKey: 'sucursal_id', as: 'gastos' });
+
+Gasto.belongsTo(ProductoGasto, { foreignKey: 'producto_gasto_id', as: 'producto_gasto' });
+ProductoGasto.hasMany(Gasto, { foreignKey: 'producto_gasto_id', as: 'gastos' });
 
 module.exports = Gasto;

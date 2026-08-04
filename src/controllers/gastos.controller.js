@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const Gasto = require('../models/gasto.model');
 const CategoriaGasto = require('../models/categoria_gasto.model');
+const ProductoGasto = require('../models/producto_gasto.model');
 const UnidadMedida = require('../models/unidad_medida.model');
 const Sucursal = require('../models/sucursal.model');
 
@@ -44,6 +45,7 @@ const obtenerGastos = async (req, res) => {
       where: whereClause,
       include: [
         { model: CategoriaGasto, as: 'categoria', attributes: ['id', 'nombre'] },
+        { model: ProductoGasto, as: 'producto_gasto', attributes: ['id', 'nombre'] },
         { model: UnidadMedida, as: 'unidad', attributes: ['id', 'nombre', 'abreviatura'] },
         { model: Sucursal, as: 'sucursal', attributes: ['id', 'nombre'] }
       ],
@@ -108,13 +110,11 @@ const borrarGasto = async (req, res) => {
 const actualizarGasto = async (req, res) => {
   try {
     const { id } = req.params;
-    const { fecha, categoria_gasto_id, nombre_producto, cantidad, unidad_medida_id, monto_total, metodo_pago, tipo_recibo } = req.body;
+    const { fecha, categoria_gasto_id, producto_gasto_id, nombre_producto, cantidad, unidad_medida_id, monto_total, metodo_pago, tipo_recibo } = req.body;
     
     const gasto = await Gasto.findOne({ where: { id, empresa_id: req.usuario.empresa_id } });
     if (!gasto) return res.status(404).json({ error: 'Gasto no encontrado' });
 
-    // Regla: Solo ADMIN_EMPRESA puede borrar/editar cualquier gasto. 
-    // CAJERO/ADMIN_SUCURSAL solo pueden editar gastos de su sucursal.
     if (req.usuario.rol !== 'ADMIN_EMPRESA' && req.usuario.rol !== 'ADMIN_SISTEMA') {
       if (gasto.sucursal_id !== req.usuario.sucursal_id) {
         return res.status(403).json({ error: 'No tienes permiso para editar este gasto' });
@@ -124,6 +124,7 @@ const actualizarGasto = async (req, res) => {
     await gasto.update({
       fecha,
       categoria_gasto_id,
+      producto_gasto_id,
       nombre_producto,
       cantidad,
       unidad_medida_id,
@@ -163,6 +164,96 @@ const crearCategoria = async (req, res) => {
   }
 };
 
+const actualizarCategoria = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre } = req.body;
+    const categoria = await CategoriaGasto.findOne({ where: { id, empresa_id: req.usuario.empresa_id } });
+    if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
+    await categoria.update({ nombre });
+    res.json({ data: categoria, mensaje: 'Categoría actualizada' });
+  } catch (error) {
+    res.status(500).json({ error: `Error al actualizar categoria: ${error.message}` });
+  }
+};
+
+const borrarCategoria = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const categoria = await CategoriaGasto.findOne({ where: { id, empresa_id: req.usuario.empresa_id } });
+    if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
+    
+    // Check if there are associated expenses
+    const gastos = await Gasto.count({ where: { categoria_gasto_id: id } });
+    if (gastos > 0) {
+      return res.status(400).json({ error: 'No se puede eliminar la categoría porque tiene gastos asociados' });
+    }
+    
+    await categoria.destroy();
+    res.json({ mensaje: 'Categoría eliminada' });
+  } catch (error) {
+    res.status(500).json({ error: `Error al eliminar categoria: ${error.message}` });
+  }
+};
+
+
+// --- PRODUCTOS DE GASTO ---
+
+const obtenerProductosGasto = async (req, res) => {
+  try {
+    const productos = await ProductoGasto.findAll({
+      where: { empresa_id: req.usuario.empresa_id, activo: true },
+      order: [['nombre', 'ASC']]
+    });
+    res.json({ data: productos });
+  } catch (error) {
+    res.status(500).json({ error: `Error al obtener productos: ${error.message}` });
+  }
+};
+
+const crearProductoGasto = async (req, res) => {
+  try {
+    const { nombre, categoria_gasto_id } = req.body;
+    if (!categoria_gasto_id) return res.status(400).json({ error: 'Falta categoria_gasto_id' });
+    const nuevo = await ProductoGasto.create({ nombre, categoria_gasto_id, empresa_id: req.usuario.empresa_id });
+    res.status(201).json({ data: nuevo });
+  } catch (error) {
+    res.status(500).json({ error: `Error al crear producto: ${error.message}` });
+  }
+};
+
+const actualizarProductoGasto = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, categoria_gasto_id } = req.body;
+    const producto = await ProductoGasto.findOne({ where: { id, empresa_id: req.usuario.empresa_id } });
+    if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+    await producto.update({ nombre, categoria_gasto_id });
+    res.json({ data: producto, mensaje: 'Producto actualizado' });
+  } catch (error) {
+    res.status(500).json({ error: `Error al actualizar producto: ${error.message}` });
+  }
+};
+
+const borrarProductoGasto = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const producto = await ProductoGasto.findOne({ where: { id, empresa_id: req.usuario.empresa_id } });
+    if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+
+    // Check if there are associated expenses
+    const gastos = await Gasto.count({ where: { producto_gasto_id: id } });
+    if (gastos > 0) {
+      return res.status(400).json({ error: 'No se puede eliminar el producto porque tiene gastos asociados' });
+    }
+
+    await producto.destroy();
+    res.json({ mensaje: 'Producto eliminado' });
+  } catch (error) {
+    res.status(500).json({ error: `Error al eliminar producto: ${error.message}` });
+  }
+};
+
 
 // --- UNIDADES DE MEDIDA ---
 
@@ -195,6 +286,12 @@ module.exports = {
   borrarGasto,
   obtenerCategorias,
   crearCategoria,
+  actualizarCategoria,
+  borrarCategoria,
+  obtenerProductosGasto,
+  crearProductoGasto,
+  actualizarProductoGasto,
+  borrarProductoGasto,
   obtenerUnidades,
   crearUnidad
 };

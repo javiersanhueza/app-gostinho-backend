@@ -6,6 +6,12 @@ const {
   borrarGasto,
   obtenerCategorias,
   crearCategoria,
+  actualizarCategoria,
+  borrarCategoria,
+  obtenerProductosGasto,
+  crearProductoGasto,
+  actualizarProductoGasto,
+  borrarProductoGasto,
   obtenerUnidades,
   crearUnidad
 } = require('../controllers/gastos.controller');
@@ -26,6 +32,14 @@ router.delete('/gastos/:id', verificarRol(rolesAdmin), borrarGasto);
 // --- CATEGORIAS DE GASTO ---
 router.get('/categorias-gasto', verificarRol(rolesAdmin), obtenerCategorias);
 router.post('/categorias-gasto', verificarRol(rolesAdmin), crearCategoria);
+router.put('/categorias-gasto/:id', verificarRol(rolesAdmin), actualizarCategoria);
+router.delete('/categorias-gasto/:id', verificarRol(rolesAdmin), borrarCategoria);
+
+// --- PRODUCTOS DE GASTO ---
+router.get('/productos-gasto', verificarRol(rolesAdmin), obtenerProductosGasto);
+router.post('/productos-gasto', verificarRol(rolesAdmin), crearProductoGasto);
+router.put('/productos-gasto/:id', verificarRol(rolesAdmin), actualizarProductoGasto);
+router.delete('/productos-gasto/:id', verificarRol(rolesAdmin), borrarProductoGasto);
 
 // --- UNIDADES DE MEDIDA ---
 router.get('/unidades-medida', verificarRol(rolesAdmin), obtenerUnidades);
