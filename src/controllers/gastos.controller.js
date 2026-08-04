@@ -160,7 +160,9 @@ const crearCategoria = async (req, res) => {
     
     const existente = await CategoriaGasto.findOne({
       where: {
-        nombre,
+        nombre: {
+          [Op.iLike]: nombre.trim()
+        },
         empresa_id: req.usuario.empresa_id
       }
     });
@@ -169,7 +171,7 @@ const crearCategoria = async (req, res) => {
       return res.status(200).json({ data: existente, mensaje: 'La categoría ya existe' });
     }
 
-    const nueva = await CategoriaGasto.create({ nombre, empresa_id: req.usuario.empresa_id });
+    const nueva = await CategoriaGasto.create({ nombre: nombre.trim(), empresa_id: req.usuario.empresa_id });
     res.status(201).json({ data: nueva });
   } catch (error) {
     res.status(500).json({ error: `Error al crear categoria: ${error.message}` });
@@ -230,7 +232,9 @@ const crearProductoGasto = async (req, res) => {
     
     const existente = await ProductoGasto.findOne({
       where: {
-        nombre,
+        nombre: {
+          [Op.iLike]: nombre.trim()
+        },
         categoria_gasto_id,
         empresa_id: req.usuario.empresa_id
       }
@@ -240,7 +244,7 @@ const crearProductoGasto = async (req, res) => {
       return res.status(200).json({ data: existente, mensaje: 'El producto ya existe' });
     }
 
-    const nuevo = await ProductoGasto.create({ nombre, categoria_gasto_id, empresa_id: req.usuario.empresa_id });
+    const nuevo = await ProductoGasto.create({ nombre: nombre.trim(), categoria_gasto_id, empresa_id: req.usuario.empresa_id });
     res.status(201).json({ data: nuevo });
   } catch (error) {
     res.status(500).json({ error: `Error al crear producto: ${error.message}` });
