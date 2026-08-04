@@ -111,7 +111,13 @@ const obtenerMenuPublico = async (req, res) => {
           direccion: sucursal.direccion,
           empresa: sucursal.empresa
         },
-        categorias: categoriasConProductos
+        categorias: categoriasConProductos,
+        promociones: descuentosActivos.map(d => ({
+          nombre: d.nombre,
+          porcentaje: d.porcentaje,
+          fecha_fin: d.fecha_fin,
+          aplica_a_todo: d.aplica_a_todo
+        }))
       }
     });
 
