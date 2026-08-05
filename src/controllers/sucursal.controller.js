@@ -140,7 +140,9 @@ const createSucursal = async (req, res) => {
       slug,
       direccion,
       activo: activo !== undefined ? activo : true,
-      empresa_id: empresa_id_asignar
+      empresa_id: empresa_id_asignar,
+      impresora_nombre: req.body.impresora_nombre || null,
+      dispositivos_pago: req.body.dispositivos_pago || []
     });
 
     res.status(201).json(nuevaSucursal);

@@ -25,6 +25,14 @@ const Sucursal = sequelize.define('Sucursal', {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   },
+  impresora_nombre: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  dispositivos_pago: {
+    type: DataTypes.JSON,
+    allowNull: true
+  },
   empresa_id: {
     type: DataTypes.UUID,
     allowNull: false,
