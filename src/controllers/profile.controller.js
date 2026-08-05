@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const Usuario = require('../models/usuario.model');
 const bcrypt = require('bcryptjs');
 
@@ -37,7 +38,7 @@ const getMyProfile = async (req, res) => {
 
     res.json(usuario);
   } catch (error) {
-    console.error('Error al obtener el perfil:', error);
+    logger.error('Error al obtener el perfil:', error);
     res.status(500).json({ error: 'Error interno al obtener el perfil.' });
   }
 };
@@ -111,7 +112,7 @@ const updateMyProfile = async (req, res) => {
     if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ error: 'El email ingresado ya está en uso por otro usuario.' });
     }
-    console.error('Error al actualizar el perfil:', error);
+    logger.error('Error al actualizar el perfil:', error);
     res.status(500).json({ error: 'Error interno al actualizar el perfil.' });
   }
 };

@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const Producto = require('../models/producto.model');
 const Categoria = require('../models/categoria.model');
 const Variante = require('../models/variante.model');
@@ -122,7 +123,7 @@ const obtenerMenuPublico = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error al obtener menú público:', error);
+    logger.error('Error al obtener menú público:', error);
     res.status(500).json({ error: 'Error al obtener el menú' });
   }
 };

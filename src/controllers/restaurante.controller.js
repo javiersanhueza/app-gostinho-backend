@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const prisma = require('../config/db');
 
 // 1. Crear un restaurante nuevo
@@ -15,7 +16,7 @@ const crearRestaurante = async (req, res) => {
 
     res.status(201).json({ data: nuevoRestaurante });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al crear el restaurante' });
   }
 };
@@ -58,7 +59,7 @@ const inicializarSaaS = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al inicializar el sistema SaaS' });
   }
 };
@@ -108,7 +109,7 @@ const toggleEstatusRestaurante = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al cambiar el estatus del restaurante' });
   }
 };
@@ -127,7 +128,7 @@ const obtenerRestaurantes = async (req, res) => {
       count: restaurantes.length
     });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al obtener la lista de restaurantes' });
   }
 };

@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const Usuario = require('../models/usuario.model');
 const Empresa = require('../models/empresa.model');
 const Rol = require('../models/rol.model');
@@ -60,7 +61,7 @@ const login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };
@@ -98,7 +99,7 @@ const recuperarPassword = async (req, res) => {
     res.json({ mensaje: 'Si el correo existe, se han enviado las instrucciones.' });
 
   } catch (error) {
-    console.error('Error en recuperarPassword:', error);
+    logger.error('Error en recuperarPassword:', error);
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };
@@ -133,7 +134,7 @@ const resetPassword = async (req, res) => {
     res.json({ mensaje: 'Contraseña actualizada con éxito.' });
 
   } catch (error) {
-    console.error('Error en resetPassword:', error);
+    logger.error('Error en resetPassword:', error);
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };

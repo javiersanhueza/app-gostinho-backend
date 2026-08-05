@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const Orden = require('../models/orden.model');
 const OrdenDetalle = require('../models/orden_detalle.model');
 const Producto = require('../models/producto.model');
@@ -161,7 +162,7 @@ const crearOrden = async (req, res) => {
 
   } catch (error) {
     await t.rollback();
-    console.error('Error al crear la orden:', error);
+    logger.error('Error al crear la orden:', error);
     res.status(500).json({ error: 'Error interno al procesar la orden' });
   }
 };

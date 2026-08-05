@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const GrupoOpciones = require('../models/grupo_opciones.model');
 const Producto = require('../models/producto.model');
 const Sabor = require('../models/sabor.model');
@@ -64,7 +65,7 @@ const agregarItemAGrupo = async (req, res) => {
 
     res.status(200).json({ mensaje: `Item '${item.nombre}' agregado al grupo '${grupo.nombre}'.` });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al agregar el item al grupo.' });
   }
 };
@@ -96,7 +97,7 @@ const obtenerConfiguracionProducto = async (req, res) => {
 
         res.json({ data: producto });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Error al obtener la configuración del producto.' });
     }
 };

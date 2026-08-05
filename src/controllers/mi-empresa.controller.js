@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const Empresa = require('../models/empresa.model');
 const Plan = require('../models/plan.model');
 const { upload } = require('../config/cloudinary');
@@ -34,7 +35,7 @@ const uploadLogo = async (req, res) => {
       logo_url: logoUrl
     });
   } catch (error) {
-    console.error('Error al subir logo:', error.message || error, error.stack);
+    logger.error('Error al subir logo:', error.message || error, error.stack);
     res.status(500).json({ error: 'Error interno al procesar el logo', details: error.message });
   }
 };
@@ -52,7 +53,7 @@ const getMiEmpresa = async (req, res) => {
 
     res.json({ data: empresa });
   } catch (error) {
-    console.error('Error al obtener mi empresa:', error);
+    logger.error('Error al obtener mi empresa:', error);
     res.status(500).json({ error: 'Error interno del servidor.' });
   }
 };
@@ -73,7 +74,7 @@ const updateMiEmpresa = async (req, res) => {
 
     res.json({ success: true, message: 'Datos actualizados correctamente.', data: empresa });
   } catch (error) {
-    console.error('Error al actualizar mi empresa:', error);
+    logger.error('Error al actualizar mi empresa:', error);
     res.status(500).json({ error: 'Error interno del servidor.' });
   }
 };

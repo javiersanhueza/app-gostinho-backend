@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const Producto = require('../models/producto.model');
 const Categoria = require('../models/categoria.model');
 const PromocionItem = require('../models/promocion_item.model');
@@ -90,7 +91,7 @@ const crearProducto = async (req, res) => {
 
     res.status(201).json({ data: nuevoProducto });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al crear el producto' });
   }
 };
@@ -149,7 +150,7 @@ const agregarItemPromo = async (req, res) => {
 
     res.status(201).json({ data: newItem, mensaje: 'Ítem agregado a la promoción con éxito' });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al agregar ítem a la promoción' });
   }
 };
@@ -172,7 +173,7 @@ const eliminarItemPromo = async (req, res) => {
     await promoItem.destroy();
     res.json({ mensaje: 'Ítem de promoción eliminado con éxito' });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al eliminar ítem de promoción' });
   }
 };
@@ -208,7 +209,7 @@ const actualizarProducto = async (req, res) => {
 
     res.json({ data: producto, mensaje: 'Producto actualizado con éxito' });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al actualizar el producto' });
   }
 };
@@ -228,7 +229,7 @@ const eliminarProducto = async (req, res) => {
     await producto.destroy();
     res.json({ mensaje: 'Producto eliminado con éxito' });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al eliminar el producto' });
   }
 };

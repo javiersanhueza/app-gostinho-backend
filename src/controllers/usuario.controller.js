@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const { Op } = require('sequelize');
 const Usuario = require('../models/usuario.model');
 const Empresa = require('../models/empresa.model');
@@ -77,7 +78,7 @@ const crearUsuario = async (req, res) => {
     if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ error: 'El nombre o el correo ya están en uso.' });
     }
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al crear el usuario.' });
   }
 };

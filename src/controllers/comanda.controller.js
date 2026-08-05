@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const Comanda = require('../models/comanda.model');
 const Orden = require('../models/orden.model');
 const OrdenDetalle = require('../models/orden_detalle.model');
@@ -169,7 +170,7 @@ const agregarOrdenAComanda = async (req, res) => {
 
   } catch (error) {
     await t.rollback();
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al agregar la orden' });
   }
 };
@@ -227,7 +228,7 @@ const cerrarComanda = async (req, res) => {
 
         res.json({ mensaje: 'Comanda cerrada y pagada exitosamente', total: comanda.total_acumulado });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Error al cerrar la comanda' });
     }
 };
@@ -263,7 +264,7 @@ const obtenerComandasAbiertas = async (req, res) => {
         });
         res.json({ data: comandas });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: 'Error al obtener las comandas' });
     }
 };

@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const Descuento = require('../models/descuento.model');
 const Producto = require('../models/producto.model');
 const Sucursal = require('../models/sucursal.model');
@@ -37,7 +38,7 @@ const crearDescuento = async (req, res) => {
 
     res.status(201).json({ data: nuevoDescuento, mensaje: 'Descuento creado con éxito' });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al crear el descuento' });
   }
 };
@@ -86,7 +87,7 @@ const obtenerDescuentos = async (req, res) => {
       offset: offset ? parseInt(offset) : null
     });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al obtener los descuentos' });
   }
 };
@@ -127,7 +128,7 @@ const actualizarDescuento = async (req, res) => {
 
     res.json({ data: descuento, mensaje: 'Descuento actualizado con éxito' });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al actualizar el descuento' });
   }
 };
@@ -147,7 +148,7 @@ const eliminarDescuento = async (req, res) => {
     await descuento.destroy();
     res.json({ mensaje: 'Descuento eliminado con éxito' });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al eliminar el descuento' });
   }
 };

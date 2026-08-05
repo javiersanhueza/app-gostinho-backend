@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 // src/controllers/cliente.controller.js
 const prisma = require('../config/db');
 
@@ -22,7 +23,7 @@ const crearCliente = async (req, res) => {
 
     res.status(201).json({ mensaje: 'Cliente registrado con éxito', data: nuevoCliente });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     // Error P2002 es el código de Prisma cuando se viola una restricción @@unique
     if (error.code === 'P2002') {
       return res.status(400).json({ error: 'Este número de teléfono ya está registrado en este local.' });

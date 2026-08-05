@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const Variante = require('../models/variante.model');
 const Producto = require('../models/producto.model');
 
@@ -28,7 +29,7 @@ const crearVariante = async (req, res) => {
 
     res.status(201).json({ data: nuevaVariante, mensaje: 'Variante creada con éxito' });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al crear la variante' });
   }
 };
@@ -95,7 +96,7 @@ const actualizarVariante = async (req, res) => {
 
     res.json({ data: variante, mensaje: 'Variante actualizada con éxito' });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al actualizar la variante' });
   }
 };
@@ -123,7 +124,7 @@ const eliminarVariante = async (req, res) => {
     await variante.destroy();
     res.json({ mensaje: 'Variante eliminada con éxito' });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Error al eliminar la variante' });
   }
 };

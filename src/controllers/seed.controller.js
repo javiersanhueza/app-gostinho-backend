@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const sequelize = require('../config/db');
 const Plan = require('../models/plan.model');
 const Empresa = require('../models/empresa.model');
@@ -78,7 +79,7 @@ const ejecutarSeed = async (req, res) => {
 
   } catch (error) {
     await t.rollback();
-    console.error('❌ Error en el endpoint de seed:', error);
+    logger.error('❌ Error en el endpoint de seed:', error);
     return res.status(500).json({ error: 'Error interno al ejecutar el seed.' });
   }
 };

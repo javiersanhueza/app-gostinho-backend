@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const { Op, fn, col, literal } = require('sequelize');
 const Empresa = require('../models/empresa.model');
 const Usuario = require('../models/usuario.model');
@@ -100,7 +101,7 @@ const getAdminSistemaDashboard = async (req, res) => {
     res.json(dashboardData);
 
   } catch (error) {
-    console.error('Error al generar el dashboard del admin sistema:', error);
+    logger.error('Error al generar el dashboard del admin sistema:', error);
     res.status(500).json({ error: 'Error interno al generar el dashboard.' });
   }
 };

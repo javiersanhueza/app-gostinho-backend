@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const { Op } = require('sequelize');
 const Sucursal = require('../models/sucursal.model');
 const Empresa = require('../models/empresa.model');
@@ -147,7 +148,7 @@ const createSucursal = async (req, res) => {
 
     res.status(201).json(nuevaSucursal);
   } catch (error) {
-    console.error('Error al crear sucursal:', error);
+    logger.error('Error al crear sucursal:', error);
     res.status(500).json({ error: 'Error interno al intentar crear la sucursal' });
   }
 };

@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const { Op } = require('sequelize');
 const Empresa = require('../models/empresa.model');
 const Plan = require('../models/plan.model');
@@ -33,7 +34,7 @@ const getEmpresas = async (req, res) => {
       data: rows
     });
   } catch (error) {
-    console.error('Error al obtener empresas:', error);
+    logger.error('Error al obtener empresas:', error);
     res.status(500).json({ error: 'Error al obtener empresas' });
   }
 };
@@ -80,7 +81,7 @@ const getEmpresaById = async (req, res) => {
 
     res.json(response);
   } catch (error) {
-    console.error('Error al obtener la empresa:', error);
+    logger.error('Error al obtener la empresa:', error);
     res.status(500).json({ error: 'Error al obtener la empresa' });
   }
 };
@@ -95,7 +96,7 @@ const createEmpresa = async (req, res) => {
     if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ error: 'El RUT ingresado ya se encuentra registrado.' });
     }
-    console.error('Error al crear empresa:', error);
+    logger.error('Error al crear empresa:', error);
     res.status(500).json({ error: 'Error interno al crear la empresa' });
   }
 };
