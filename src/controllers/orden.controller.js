@@ -87,33 +87,23 @@ const crearOrden = async (req, res) => {
       let precioItem = variante.precio;
       const { opciones_elegidas } = item;
       
-      if (opciones_elegidas) {
+      if (opciones_elegidas && Array.isArray(opciones_elegidas)) {
+        for (const configItem of opciones_elegidas) {
+          const { config } = configItem;
+          if (config && config.toppings_pago && config.toppings_pago.length > 0) {
+            const toppingIds = config.toppings_pago.map(t => t.id);
+            const toppingsDB = await Topping.findAll({ where: { id: toppingIds }, transaction: t });
+            toppingsDB.forEach(tp => {
+              precioItem += tp.precio_extra;
+            });
+          }
+        }
+      } else if (opciones_elegidas) {
+        // Fallback for old structure
         const { sabores, frutas, toppings } = opciones_elegidas;
-
-        // Validar reglas de negocio (límites)
-        if (sabores && sabores.length > variante.max_sabores) {
-            await t.rollback();
-            return res.status(400).json({ error: `Excediste el límite de ${variante.max_sabores} sabores para este tamaño.` });
-        }
-        if (frutas && frutas.length > variante.max_frutas) {
-            await t.rollback();
-            return res.status(400).json({ error: `Excediste el límite de ${variante.max_frutas} frutas para este tamaño.` });
-        }
         if (toppings) {
             const toppingsDB = await Topping.findAll({ where: { id: toppings }, transaction: t });
-            const toppingsGratis = toppingsDB.filter(tp => tp.precio_extra === 0);
             const toppingsPago = toppingsDB.filter(tp => tp.precio_extra > 0);
-
-            if (toppingsGratis.length > variante.max_toppings_gratis) {
-                await t.rollback();
-                return res.status(400).json({ error: `Excediste el límite de ${variante.max_toppings_gratis} toppings gratis.` });
-            }
-            if (toppingsPago.length > variante.max_toppings_pago) {
-                await t.rollback();
-                return res.status(400).json({ error: `Excediste el límite de ${variante.max_toppings_pago} toppings de pago.` });
-            }
-            
-            // Sumar precios de toppings de pago
             toppingsPago.forEach(tp => {
                 precioItem += tp.precio_extra;
             });
