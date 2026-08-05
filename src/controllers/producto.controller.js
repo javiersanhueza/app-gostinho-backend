@@ -124,7 +124,12 @@ const obtenerProductos = async (req, res) => {
           model: PromocionItem, 
           as: 'promocion_items',
           include: [
-            { model: Producto, as: 'producto_hijo', attributes: ['id', 'nombre', 'opcion_endulzante'] },
+            { 
+              model: Producto, 
+              as: 'producto_hijo', 
+              attributes: ['id', 'nombre', 'opcion_endulzante'],
+              include: [{ model: Variante, as: 'variantes' }]
+            },
             { model: Variante, as: 'variante_hija' }
           ]
         }
