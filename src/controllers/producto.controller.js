@@ -98,17 +98,28 @@ const crearProducto = async (req, res) => {
 
 const obtenerProductos = async (req, res) => {
   try {
-    const { sucursal_id } = req.query;
+    const { sucursal_id, activos_only } = req.query;
 
     if (!sucursal_id) {
       return res.status(400).json({ error: 'sucursal_id es requerido' });
     }
 
+    const whereProducto = { sucursal_id };
+    if (activos_only === 'true') {
+      whereProducto.activo = true;
+    }
+
+    const varianteInclude = { model: Variante, as: 'variantes' };
+    if (activos_only === 'true') {
+      varianteInclude.where = { stock: true };
+      varianteInclude.required = false;
+    }
+
     const productos = await Producto.findAll({
-      where: { sucursal_id },
+      where: whereProducto,
       include: [
         { model: Categoria, as: 'categoria', attributes: ['id', 'nombre'] },
-        { model: Variante, as: 'variantes' },
+        varianteInclude,
         { 
           model: PromocionItem, 
           as: 'promocion_items',

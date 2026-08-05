@@ -37,7 +37,7 @@ const crearVariante = async (req, res) => {
 const obtenerVariantesPorProducto = async (req, res) => {
   try {
     const { producto_id } = req.params;
-    const { sucursal_id } = req.query;
+    const { sucursal_id, activos_only } = req.query;
 
     if (!sucursal_id) {
       return res.status(400).json({ error: 'sucursal_id es requerido' });
@@ -51,8 +51,13 @@ const obtenerVariantesPorProducto = async (req, res) => {
         return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
+    const whereVariante = { producto_id };
+    if (activos_only === 'true') {
+      whereVariante.stock = true;
+    }
+
     const variantes = await Variante.findAll({
-      where: { producto_id },
+      where: whereVariante,
       order: [['precio', 'ASC']]
     });
 
