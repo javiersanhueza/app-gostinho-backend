@@ -4,6 +4,7 @@ const Orden = require('../models/orden.model');
 const OrdenDetalle = require('../models/orden_detalle.model');
 const Producto = require('../models/producto.model');
 const Variante = require('../models/variante.model');
+const Topping = require('../models/topping.model');
 const sequelize = require('../config/db');
 const ROLES = require('../config/roles');
 
@@ -128,28 +129,43 @@ const agregarOrdenAComanda = async (req, res) => {
     const detallesProcesados = [];
 
     for (const item of detalles) {
-      const producto = await Producto.findOne({
-          where: { id: item.producto_id, empresa_id: creador.empresa_id },
-          include: [{ model: Variante, as: 'variantes', where: { id: item.variante_id, stock: true }}],
-          transaction: t 
+      const variante = await Variante.findOne({
+        where: { id: item.variante_id, producto_id: item.producto_id, stock: true },
+        include: [{ model: Producto, as: 'producto', where: { empresa_id: creador.empresa_id } }],
+        transaction: t
       });
 
-      if (!producto) {
+      if (!variante) {
         await t.rollback();
         return res.status(404).json({ error: `Producto o Variante no encontrada/sin stock (ID: ${item.producto_id})` });
       }
 
-      const varianteSeleccionada = producto.variantes[0];
-      const precioUnitario = varianteSeleccionada.precio;
-      const subtotal = precioUnitario * item.cantidad;
+      let precioItem = variante.precio;
+      const { opciones_elegidas } = item;
+      
+      if (opciones_elegidas && Array.isArray(opciones_elegidas)) {
+        for (const configItem of opciones_elegidas) {
+          const { config } = configItem;
+          if (config && config.toppings_pago && config.toppings_pago.length > 0) {
+            const toppingIds = config.toppings_pago.map(t => t.id);
+            const toppingsDB = await Topping.findAll({ where: { id: toppingIds }, transaction: t });
+            toppingsDB.forEach(tp => {
+              precioItem += tp.precio_extra;
+            });
+          }
+        }
+      }
+
+      const subtotal = precioItem * item.cantidad;
       totalOrden += subtotal;
 
       detallesProcesados.push({
         cantidad: item.cantidad,
-        precio_unitario: precioUnitario,
+        precio_unitario: precioItem,
         subtotal: subtotal,
-        producto_id: producto.id,
-        nombre_producto_historico: `${producto.nombre} (${varianteSeleccionada.nombre})`
+        producto_id: variante.producto.id,
+        opciones_elegidas: opciones_elegidas || null,
+        nombre_producto_historico: `${variante.producto.nombre} (${variante.nombre})`
       });
     }
 
