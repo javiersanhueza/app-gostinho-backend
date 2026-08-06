@@ -16,6 +16,7 @@ if (process.env.DATABASE_URL) {
                 rejectUnauthorized: false // Necesario para conectar a Neon, Render, etc.
             }
         },
+        timezone: 'America/Santiago',
         logging: false
     });
 } else {
@@ -27,6 +28,7 @@ if (process.env.DATABASE_URL) {
         {
             host: process.env.DB_HOST || 'localhost',
             dialect: 'mysql',
+            timezone: '-04:00', // Chile Standard Time approximation
             logging: false
         }
     );
