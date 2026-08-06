@@ -190,16 +190,21 @@ const obtenerOrdenes = async (req, res) => {
         let whereClause = {};
         if (rol === ROLES.ADMIN_EMPRESA || rol === ROLES.ADMIN_SISTEMA) {
             whereClause.empresa_id = empresa_id;
+            if (req.query.sucursal_id) {
+                whereClause.sucursal_id = req.query.sucursal_id;
+            }
         } else {
              whereClause.sucursal_id = sucursal_id;
         }
         
         // Filtros por fecha
         if (req.query.fecha_inicio && req.query.fecha_fin) {
-           const fechaInicio = new Date(req.query.fecha_inicio);
-           fechaInicio.setHours(0, 0, 0, 0);
-           const fechaFin = new Date(req.query.fecha_fin);
-           fechaFin.setHours(23, 59, 59, 999);
+           const [y, m, d] = req.query.fecha_inicio.split('-');
+           const fechaInicio = new Date(y, m - 1, d, 0, 0, 0, 0);
+           
+           const [y2, m2, d2] = req.query.fecha_fin.split('-');
+           const fechaFin = new Date(y2, m2 - 1, d2, 23, 59, 59, 999);
+           
            whereClause.created_at = {
               [Op.between]: [fechaInicio, fechaFin]
            };
