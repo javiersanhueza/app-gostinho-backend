@@ -1,5 +1,5 @@
 const axios = require('axios');
-const logger = require('../config/logger');
+const logger = require('../utils/logger');
 
 // 🔴 IMPORTANTE: REEMPLAZA ESTO CON TU ACCESS TOKEN DE PRODUCCIÓN
 const ACCESS_TOKEN = 'APP_USR-7544058536266800-020722-803e26eb22266ee85dd101cb614b601e-3020348327';
