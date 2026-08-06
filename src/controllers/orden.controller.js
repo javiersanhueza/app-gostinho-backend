@@ -125,6 +125,28 @@ const crearOrden = async (req, res) => {
       });
     }
 
+    // Calcular folio diario
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const { Op } = require('sequelize');
+
+    const ultimaOrden = await Orden.findOne({
+      where: {
+        sucursal_id: sucursal_id,
+        created_at: {
+          [Op.between]: [startOfDay, endOfDay]
+        }
+      },
+      order: [['folio_diario', 'DESC']],
+      transaction: t,
+      lock: t.LOCK.UPDATE
+    });
+
+    const nextFolioDiario = ultimaOrden && ultimaOrden.folio_diario ? ultimaOrden.folio_diario + 1 : 1;
+
     const nuevaOrden = await Orden.create({
       empresa_id: creador.empresa_id,
       sucursal_id: sucursal_id,
@@ -132,7 +154,8 @@ const crearOrden = async (req, res) => {
       total: totalOrden,
       metodo_pago,
       tipo_entrega,
-      estado: 'PENDIENTE'
+      estado: 'PENDIENTE',
+      folio_diario: nextFolioDiario
     }, { transaction: t });
 
     const detallesAInsertar = detallesProcesados.map(d => ({ ...d, orden_id: nuevaOrden.id }));
@@ -149,7 +172,7 @@ const crearOrden = async (req, res) => {
     await t.commit();
     res.status(201).json({
       mensaje: 'Orden creada exitosamente',
-      data: { id: nuevaOrden.id, total: nuevaOrden.total, codigo_qr_reclamo: nuevaOrden.codigo_reclamo }
+      data: { id: nuevaOrden.id, folio_diario: nuevaOrden.folio_diario, folio: nuevaOrden.folio, total: nuevaOrden.total, codigo_qr_reclamo: nuevaOrden.codigo_reclamo }
     });
 
   } catch (error) {
@@ -162,12 +185,24 @@ const crearOrden = async (req, res) => {
 // ... (el resto de los métodos como obtenerOrdenes y reclamarPuntos se mantienen igual)
 const obtenerOrdenes = async (req, res) => {
     try {
+        const { Op } = require('sequelize');
         const { sucursal_id, empresa_id, rol } = req.usuario;
         let whereClause = {};
         if (rol === ROLES.ADMIN_EMPRESA || rol === ROLES.ADMIN_SISTEMA) {
             whereClause.empresa_id = empresa_id;
         } else {
              whereClause.sucursal_id = sucursal_id;
+        }
+        
+        // Filtros por fecha
+        if (req.query.fecha_inicio && req.query.fecha_fin) {
+           const fechaInicio = new Date(req.query.fecha_inicio);
+           fechaInicio.setHours(0, 0, 0, 0);
+           const fechaFin = new Date(req.query.fecha_fin);
+           fechaFin.setHours(23, 59, 59, 999);
+           whereClause.created_at = {
+              [Op.between]: [fechaInicio, fechaFin]
+           };
         }
         const ordenes = await Orden.findAll({
             where: whereClause,

@@ -19,6 +19,10 @@ const Orden = sequelize.define('Orden', {
     allowNull: false,
     unique: true
   },
+  folio_diario: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   total: {
     type: DataTypes.INTEGER,
     defaultValue: 0
