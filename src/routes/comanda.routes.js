@@ -5,7 +5,7 @@ const ROLES = require('../config/roles');
 
 const router = Router();
 
-const rolesOperativos = [ROLES.ADMIN_SUCURSAL, ROLES.CAJERO];
+const rolesOperativos = [ROLES.ADMIN_EMPRESA, ROLES.ADMIN_SUCURSAL, ROLES.CAJERO];
 
 router.post('/', verificarRol(rolesOperativos), abrirComanda);
 router.get('/', verificarRol(rolesOperativos), obtenerComandasAbiertas);
