@@ -5,7 +5,7 @@ const ROLES = require('../config/roles');
 
 const router = Router();
 
-const rolesCrear = [ROLES.ADMIN_SUCURSAL, ROLES.CAJERO];
+const rolesCrear = [ROLES.ADMIN_EMPRESA, ROLES.ADMIN_SUCURSAL, ROLES.CAJERO];
 const rolesVer = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA, ROLES.ADMIN_SUCURSAL, ROLES.CAJERO, ROLES.COCINERO];
 const rolesCliente = [ROLES.CLIENTE];
 
