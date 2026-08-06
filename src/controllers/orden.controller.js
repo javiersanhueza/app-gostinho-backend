@@ -60,9 +60,11 @@ const crearOrden = async (req, res) => {
     const { cliente_id, metodo_pago, tipo_entrega, detalles } = req.body;
     const creador = req.usuario;
 
-    if (!creador.sucursal_id) {
+    const sucursal_id = req.body.sucursal_id || creador.sucursal_id;
+
+    if (!sucursal_id) {
         await t.rollback();
-        return res.status(400).json({ error: 'Tu usuario no tiene una sucursal asignada.' });
+        return res.status(400).json({ error: 'Tu usuario no tiene una sucursal asignada o no se envió en el body.' });
     }
     if (!detalles || detalles.length === 0) {
       await t.rollback();
@@ -75,7 +77,7 @@ const crearOrden = async (req, res) => {
     for (const item of detalles) {
       const variante = await Variante.findOne({
         where: { id: item.variante_id, producto_id: item.producto_id, stock: true },
-        include: [{ model: Producto, as: 'producto', where: { sucursal_id: creador.sucursal_id } }],
+        include: [{ model: Producto, as: 'producto', where: { sucursal_id: sucursal_id } }],
         transaction: t
       });
 
@@ -125,7 +127,7 @@ const crearOrden = async (req, res) => {
 
     const nuevaOrden = await Orden.create({
       empresa_id: creador.empresa_id,
-      sucursal_id: creador.sucursal_id,
+      sucursal_id: sucursal_id,
       cliente_id: cliente_id || null,
       total: totalOrden,
       metodo_pago,
