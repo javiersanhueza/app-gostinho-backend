@@ -129,15 +129,31 @@ const agregarOrdenAComanda = async (req, res) => {
     const detallesProcesados = [];
 
     for (const item of detalles) {
+      if (!item.variante_id || !item.producto_id) {
+        await t.rollback();
+        return res.status(400).json({ error: `Falta variante_id o producto_id en un item del detalle.` });
+      }
+
       const variante = await Variante.findOne({
-        where: { id: item.variante_id, producto_id: item.producto_id, stock: true },
-        include: [{ model: Producto, as: 'producto', where: { empresa_id: creador.empresa_id } }],
+        where: { id: item.variante_id, producto_id: item.producto_id },
+        include: [{ model: Producto, as: 'producto' }],
         transaction: t
       });
 
       if (!variante) {
         await t.rollback();
-        return res.status(404).json({ error: `Producto o Variante no encontrada/sin stock (ID: ${item.producto_id})` });
+        return res.status(404).json({ error: `Variante no encontrada en la BD (ID: ${item.variante_id})` });
+      }
+
+      if (!variante.stock) {
+        await t.rollback();
+        return res.status(400).json({ error: `La variante (ID: ${item.variante_id}) no tiene stock.` });
+      }
+
+      const empresaAUsar = comanda.empresa_id || creador.empresa_id;
+      if (!empresaAUsar || variante.producto.empresa_id !== empresaAUsar) {
+        await t.rollback();
+        return res.status(403).json({ error: `El producto no pertenece a la empresa actual.` });
       }
 
       let precioItem = variante.precio;
