@@ -59,15 +59,16 @@ const abrirComanda = async (req, res) => {
   try {
     const { numero_mesa } = req.body;
     const creador = req.usuario;
+    const sucursal_id = req.body.sucursal_id || req.query.sucursal_id || creador.sucursal_id;
 
-    if (!creador.sucursal_id) {
-      return res.status(400).json({ error: 'Tu usuario no tiene una sucursal asignada.' });
+    if (!sucursal_id) {
+      return res.status(400).json({ error: 'Falta enviar el sucursal_id o tu usuario no tiene una asignada.' });
     }
 
     const nuevaComanda = await Comanda.create({
       numero_mesa,
       empresa_id: creador.empresa_id,
-      sucursal_id: creador.sucursal_id,
+      sucursal_id: sucursal_id,
       estado: 'ABIERTA'
     });
 
@@ -111,9 +112,10 @@ const agregarOrdenAComanda = async (req, res) => {
     const { id: comanda_id } = req.params;
     const { detalles } = req.body;
     const creador = req.usuario;
+    const sucursal_id = req.body.sucursal_id || req.query.sucursal_id || creador.sucursal_id;
 
     const comanda = await Comanda.findOne({
-      where: { id: comanda_id, sucursal_id: creador.sucursal_id, estado: 'ABIERTA' },
+      where: { id: comanda_id, sucursal_id: sucursal_id, estado: 'ABIERTA' },
       transaction: t
     });
 
@@ -153,7 +155,7 @@ const agregarOrdenAComanda = async (req, res) => {
 
     const nuevaOrden = await Orden.create({
       empresa_id: creador.empresa_id,
-      sucursal_id: creador.sucursal_id,
+      sucursal_id: sucursal_id,
       comanda_id: comanda.id, // VINCULAMOS LA ORDEN
       total: totalOrden,
       estado: 'EN_PREPARACION' // Las órdenes de mesa no se pagan al instante
@@ -209,9 +211,10 @@ const cerrarComanda = async (req, res) => {
         const { id } = req.params;
         const { metodo_pago } = req.body;
         const creador = req.usuario;
+        const sucursal_id = req.body.sucursal_id || req.query.sucursal_id || creador.sucursal_id;
 
         const comanda = await Comanda.findOne({
-            where: { id, sucursal_id: creador.sucursal_id, estado: 'ABIERTA' }
+            where: { id, sucursal_id: sucursal_id, estado: 'ABIERTA' }
         });
 
         if (!comanda) {
@@ -248,8 +251,14 @@ const cerrarComanda = async (req, res) => {
 const obtenerComandasAbiertas = async (req, res) => {
     try {
         const creador = req.usuario;
+        const sucursal_id = req.query.sucursal_id || req.body.sucursal_id || creador.sucursal_id;
+        
+        if (!sucursal_id) {
+            return res.status(400).json({ error: 'Falta especificar la sucursal_id.' });
+        }
+
         const comandas = await Comanda.findAll({
-            where: { sucursal_id: creador.sucursal_id, estado: 'ABIERTA' },
+            where: { sucursal_id: sucursal_id, estado: 'ABIERTA' },
             include: [{
                 model: Orden,
                 as: 'ordenes',
