@@ -75,7 +75,7 @@ const crearOrden = async (req, res) => {
     for (const item of detalles) {
       const variante = await Variante.findOne({
         where: { id: item.variante_id, producto_id: item.producto_id, stock: true },
-        include: [{ model: Producto, as: 'producto', where: { empresa_id: creador.empresa_id } }],
+        include: [{ model: Producto, as: 'producto', where: { sucursal_id: creador.sucursal_id } }],
         transaction: t
       });
 

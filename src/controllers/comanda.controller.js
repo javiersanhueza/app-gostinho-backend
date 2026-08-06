@@ -150,10 +150,9 @@ const agregarOrdenAComanda = async (req, res) => {
         return res.status(400).json({ error: `La variante (ID: ${item.variante_id}) no tiene stock.` });
       }
 
-      const empresaAUsar = comanda.empresa_id || creador.empresa_id;
-      if (!empresaAUsar || variante.producto.empresa_id !== empresaAUsar) {
+      if (variante.producto.sucursal_id !== comanda.sucursal_id) {
         await t.rollback();
-        return res.status(403).json({ error: `El producto no pertenece a la empresa actual.` });
+        return res.status(403).json({ error: `El producto no pertenece a la sucursal de esta comanda.` });
       }
 
       let precioItem = variante.precio;
