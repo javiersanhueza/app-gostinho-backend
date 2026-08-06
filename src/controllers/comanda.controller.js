@@ -297,7 +297,7 @@ const obtenerComandasAbiertas = async (req, res) => {
                 include: [{
                     model: OrdenDetalle,
                     as: 'detalles',
-                    attributes: ['nombre_producto_historico', 'cantidad']
+                    attributes: ['id', 'nombre_producto_historico', 'cantidad']
                 }]
             }],
             order: [['numero_mesa', 'ASC']]
@@ -309,5 +309,58 @@ const obtenerComandasAbiertas = async (req, res) => {
     }
 };
 
+const eliminarItemComanda = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { id: comanda_id, detalle_id } = req.params;
+    const creador = req.usuario;
+    const sucursal_id = req.body.sucursal_id || req.query.sucursal_id || creador.sucursal_id;
 
-module.exports = { abrirComanda, agregarOrdenAComanda, cerrarComanda, obtenerComandasAbiertas };
+    const comanda = await Comanda.findOne({
+      where: { id: comanda_id, sucursal_id: sucursal_id, estado: 'ABIERTA' },
+      transaction: t
+    });
+
+    if (!comanda) {
+      await t.rollback();
+      return res.status(404).json({ error: 'Comanda no encontrada o no está abierta.' });
+    }
+
+    const detalle = await OrdenDetalle.findOne({
+      where: { id: detalle_id },
+      include: [{ model: Orden, as: 'orden', where: { comanda_id: comanda.id } }],
+      transaction: t
+    });
+
+    if (!detalle) {
+      await t.rollback();
+      return res.status(404).json({ error: 'Item no encontrado en esta comanda.' });
+    }
+
+    const subtotal = detalle.subtotal;
+    
+    // Contamos si es el último detalle de esta orden
+    const cantidadDetallesOrden = await OrdenDetalle.count({ where: { orden_id: detalle.orden_id }, transaction: t });
+
+    if (cantidadDetallesOrden <= 1) {
+      // Es el último item, eliminamos la orden completa para no dejar órdenes vacías
+      await Orden.destroy({ where: { id: detalle.orden_id }, transaction: t });
+    } else {
+      // No es el último, solo restamos el subtotal a la orden
+      await Orden.decrement('total', { by: subtotal, where: { id: detalle.orden_id }, transaction: t });
+    }
+
+    await detalle.destroy({ transaction: t });
+    await comanda.decrement('total_acumulado', { by: subtotal, transaction: t });
+
+    await t.commit();
+    res.json({ mensaje: 'Item eliminado correctamente' });
+
+  } catch (error) {
+    await t.rollback();
+    logger.error(error);
+    res.status(500).json({ error: 'Error al eliminar el item' });
+  }
+};
+
+module.exports = { abrirComanda, agregarOrdenAComanda, cerrarComanda, obtenerComandasAbiertas, eliminarItemComanda };
