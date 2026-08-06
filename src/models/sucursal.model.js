@@ -33,6 +33,11 @@ const Sucursal = sequelize.define('Sucursal', {
     type: DataTypes.JSON,
     allowNull: true
   },
+  numero_mesas: {
+    type: DataTypes.INTEGER,
+    defaultValue: 10,
+    allowNull: false
+  },
   empresa_id: {
     type: DataTypes.UUID,
     allowNull: false,
