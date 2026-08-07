@@ -257,4 +257,29 @@ const reclamarPuntos = async (req, res) => {
   }
 };
 
-module.exports = { crearOrden, obtenerOrdenes, reclamarPuntos };
+const eliminarOrden = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { empresa_id, roles } = req.usuario;
+
+    const orden = await Orden.findByPk(id);
+    if (!orden) {
+      return res.status(404).json({ error: 'Orden no encontrada.' });
+    }
+
+    // Solo admins de la empresa dueña pueden eliminar
+    const esAdmin = roles && (roles.includes(ROLES.ADMIN_EMPRESA) || roles.includes(ROLES.ADMIN_SISTEMA));
+    if (!esAdmin || orden.empresa_id !== empresa_id) {
+      return res.status(403).json({ error: 'No tienes permiso para eliminar esta orden.' });
+    }
+
+    // Los detalles se eliminan en cascada gracias a onDelete: 'CASCADE'
+    await orden.destroy();
+    res.json({ mensaje: 'Orden eliminada correctamente.' });
+  } catch (error) {
+    logger.error('Error al eliminar la orden:', error);
+    res.status(500).json({ error: 'Error al eliminar la orden.' });
+  }
+};
+
+module.exports = { crearOrden, obtenerOrdenes, reclamarPuntos, eliminarOrden };
