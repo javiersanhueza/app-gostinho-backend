@@ -16,7 +16,6 @@ if (process.env.DATABASE_URL) {
                 rejectUnauthorized: false // Necesario para conectar a Neon, Render, etc.
             }
         },
-        timezone: 'America/Santiago',
         logging: false
     });
 } else {
