@@ -125,23 +125,22 @@ const crearOrden = async (req, res) => {
       });
     }
 
-    // Calcular folio diario usando CURRENT_DATE de PostgreSQL (respeta SET timezone = 'America/Santiago')
-    const { Op, literal } = require('sequelize');
+    // Calcular folio diario con raw query (a prueba de fallos)
+    const [folioResult] = await sequelize.query(
+      `SELECT COALESCE(MAX(folio_diario), 0) as max_folio 
+       FROM ordenes 
+       WHERE sucursal_id = :sucursal_id 
+       AND created_at >= CURRENT_DATE 
+       AND created_at < CURRENT_DATE + INTERVAL '1 day'`,
+      { 
+        replacements: { sucursal_id }, 
+        type: sequelize.QueryTypes.SELECT,
+        transaction: t,
+        lock: t.LOCK.UPDATE
+      }
+    );
 
-    const ultimaOrden = await Orden.findOne({
-      where: {
-        sucursal_id: sucursal_id,
-        created_at: {
-          [Op.gte]: literal("CURRENT_DATE"),
-          [Op.lt]: literal("CURRENT_DATE + INTERVAL '1 day'")
-        }
-      },
-      order: [['folio_diario', 'DESC']],
-      transaction: t,
-      lock: t.LOCK.UPDATE
-    });
-
-    const nextFolioDiario = ultimaOrden && ultimaOrden.folio_diario ? ultimaOrden.folio_diario + 1 : 1;
+    const nextFolioDiario = (folioResult?.max_folio || 0) + 1;
 
     const nuevaOrden = await Orden.create({
       empresa_id: creador.empresa_id,
