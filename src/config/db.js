@@ -16,7 +16,13 @@ if (process.env.DATABASE_URL) {
                 rejectUnauthorized: false // Necesario para conectar a Neon, Render, etc.
             }
         },
-        logging: false
+        timezone: '-04:00', // Chile (CLT)
+        logging: false,
+        hooks: {
+            afterConnect: async (connection) => {
+                await connection.query("SET timezone = 'America/Santiago';");
+            }
+        }
     });
 } else {
     // Conexión para Desarrollo Local (MySQL)
