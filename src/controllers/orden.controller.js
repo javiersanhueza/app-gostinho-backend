@@ -194,9 +194,12 @@ const crearOrden = async (req, res) => {
 const obtenerOrdenes = async (req, res) => {
     try {
         const { Op } = require('sequelize');
-        const { sucursal_id, empresa_id, rol } = req.usuario;
+        const { sucursal_id, empresa_id, roles } = req.usuario;
         let whereClause = {};
-        if (rol === ROLES.ADMIN_EMPRESA || rol === ROLES.ADMIN_SISTEMA) {
+        
+        const esAdmin = roles && (roles.includes(ROLES.ADMIN_EMPRESA) || roles.includes(ROLES.ADMIN_SISTEMA));
+        
+        if (esAdmin) {
             whereClause.empresa_id = empresa_id;
             if (req.query.sucursal_id) {
                 whereClause.sucursal_id = req.query.sucursal_id;
@@ -227,6 +230,7 @@ const obtenerOrdenes = async (req, res) => {
         });
         res.json({ data: ordenes });
     } catch (error) {
+        logger.error('Error al obtener las órdenes:', error);
         res.status(500).json({ error: 'Error al obtener las órdenes' });
     }
 };
