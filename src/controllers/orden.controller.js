@@ -125,27 +125,15 @@ const crearOrden = async (req, res) => {
       });
     }
 
-    // Calcular folio diario (UTC-4 / Chile)
-    const fechaActual = new Date();
-    const isoDate = fechaActual.toISOString().split('T')[0]; // Toma la fecha en UTC
-    const inicioDia = new Date(`${isoDate}T04:00:00.000Z`);
-    
-    const finDia = new Date(`${isoDate}T03:59:59.999Z`);
-    finDia.setDate(finDia.getDate() + 1);
-    
-    // Si la hora actual en UTC es menor a las 04:00, seguimos en el día "anterior" para Chile
-    if (fechaActual.getUTCHours() < 4) {
-        inicioDia.setDate(inicioDia.getDate() - 1);
-        finDia.setDate(finDia.getDate() - 1);
-    }
-
-    const { Op } = require('sequelize');
+    // Calcular folio diario usando CURRENT_DATE de PostgreSQL (respeta SET timezone = 'America/Santiago')
+    const { Op, literal } = require('sequelize');
 
     const ultimaOrden = await Orden.findOne({
       where: {
         sucursal_id: sucursal_id,
         created_at: {
-          [Op.between]: [inicioDia, finDia]
+          [Op.gte]: literal("CURRENT_DATE"),
+          [Op.lt]: literal("CURRENT_DATE + INTERVAL '1 day'")
         }
       },
       order: [['folio_diario', 'DESC']],
@@ -162,7 +150,7 @@ const crearOrden = async (req, res) => {
       total: totalOrden,
       metodo_pago,
       tipo_entrega,
-      estado: 'PENDIENTE',
+      estado: 'PAGADO',
       folio_diario: nextFolioDiario
     }, { transaction: t });
 
@@ -208,15 +196,12 @@ const obtenerOrdenes = async (req, res) => {
              whereClause.sucursal_id = sucursal_id;
         }
         
-        // Filtros por fecha (UTC-4 / Chile)
+        // Filtros por fecha (usa la timezone de la sesión PostgreSQL: America/Santiago)
+        const { literal } = require('sequelize');
         if (req.query.fecha_inicio && req.query.fecha_fin) {
-           const fechaInicio = new Date(`${req.query.fecha_inicio}T04:00:00.000Z`);
-           
-           const fechaFin = new Date(`${req.query.fecha_fin}T03:59:59.999Z`);
-           fechaFin.setDate(fechaFin.getDate() + 1); // Al día siguiente a las 03:59:59 UTC
-           
            whereClause.created_at = {
-              [Op.between]: [fechaInicio, fechaFin]
+              [Op.gte]: literal(`'${req.query.fecha_inicio}'::date`),
+              [Op.lt]: literal(`('${req.query.fecha_fin}'::date + INTERVAL '1 day')`)
            };
         }
         const ordenes = await Orden.findAll({
