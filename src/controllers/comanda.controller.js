@@ -208,10 +208,10 @@ const agregarOrdenAComanda = async (req, res) => {
     await comanda.increment('total_acumulado', { by: totalOrden, transaction: t });
 
     await t.commit();
-    res.status(201).json({ mensaje: 'Orden agregada a la comanda', data: nuevaOrden });
+    res.status(201).json({ mensaje: 'Orden agregada a la comanda', data: orden });
 
   } catch (error) {
-    await t.rollback();
+    try { await t.rollback(); } catch(e) {}
     logger.error(error);
     res.status(500).json({ error: 'Error al agregar la orden' });
   }
