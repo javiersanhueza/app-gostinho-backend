@@ -184,15 +184,24 @@ const agregarOrdenAComanda = async (req, res) => {
       });
     }
 
-    const nuevaOrden = await Orden.create({
-      empresa_id: creador.empresa_id,
-      sucursal_id: sucursal_id,
-      comanda_id: comanda.id, // VINCULAMOS LA ORDEN
-      total: totalOrden,
-      estado: 'EN_PREPARACION' // Las órdenes de mesa no se pagan al instante
-    }, { transaction: t });
+    let orden = await Orden.findOne({
+      where: { comanda_id: comanda.id, estado: 'EN_PREPARACION' },
+      transaction: t
+    });
 
-    const detallesAInsertar = detallesProcesados.map(d => ({ ...d, orden_id: nuevaOrden.id }));
+    if (!orden) {
+      orden = await Orden.create({
+        empresa_id: creador.empresa_id,
+        sucursal_id: sucursal_id,
+        comanda_id: comanda.id,
+        total: totalOrden,
+        estado: 'EN_PREPARACION'
+      }, { transaction: t });
+    } else {
+      await orden.increment('total', { by: totalOrden, transaction: t });
+    }
+
+    const detallesAInsertar = detallesProcesados.map(d => ({ ...d, orden_id: orden.id }));
     await OrdenDetalle.bulkCreate(detallesAInsertar, { transaction: t });
 
     // Actualizamos el total de la comanda
@@ -252,11 +261,29 @@ const cerrarComanda = async (req, res) => {
             return res.status(404).json({ error: 'Comanda no encontrada o ya está cerrada.' });
         }
 
+        // Calcular folio diario
+        const { QueryTypes } = require('sequelize'); // Import if necessary, or sequelize.QueryTypes works. Wait, is sequelize imported? Yes, const { sequelize } = require('../models');
+        const [folioResult] = await sequelize.query(
+          `SELECT COALESCE(MAX(folio_diario), 0) as max_folio 
+           FROM ordenes 
+           WHERE sucursal_id = :sucursal_id 
+           AND created_at >= CURRENT_DATE 
+           AND created_at < CURRENT_DATE + INTERVAL '1 day'`,
+          { 
+            replacements: { sucursal_id }, 
+            type: sequelize.QueryTypes.SELECT
+          }
+        );
+        const nextFolioDiario = (folioResult?.max_folio || 0) + 1;
+
         await comanda.update({ estado: 'PAGADA' });
         
-        // Opcional: Podríamos querer actualizar el método de pago en todas las órdenes asociadas
         await Orden.update(
-            { metodo_pago: metodo_pago || 'EFECTIVO', estado: 'PAGADO' },
+            { 
+              metodo_pago: metodo_pago || 'EFECTIVO', 
+              estado: 'PAGADO',
+              folio_diario: nextFolioDiario 
+            },
             { where: { comanda_id: id } }
         );
 
@@ -297,7 +324,7 @@ const obtenerComandasAbiertas = async (req, res) => {
                 include: [{
                     model: OrdenDetalle,
                     as: 'detalles',
-                    attributes: ['id', 'nombre_producto_historico', 'cantidad']
+                    attributes: ['id', 'nombre_producto_historico', 'cantidad', 'subtotal', 'precio_unitario', 'opciones_elegidas']
                 }]
             }],
             order: [['numero_mesa', 'ASC']]

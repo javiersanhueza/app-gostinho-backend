@@ -10,6 +10,7 @@ const Fruta = require('../models/fruta.model');
 const Topping = require('../models/topping.model');
 const sequelize = require('../config/db');
 const ROLES = require('../config/roles');
+const Comanda = require('../models/comanda.model');
 
 // ... (Swagger docs se mantienen igual, pero el input de OrdenDetalle ahora es más complejo)
 // Se actualiza la documentación para reflejar el nuevo formato de opciones_elegidas
@@ -212,7 +213,8 @@ const obtenerOrdenes = async (req, res) => {
             where: whereClause,
             include: [
                 { model: OrdenDetalle, as: 'detalles' },
-                { model: Cliente, as: 'cliente' }
+                { model: Cliente, as: 'cliente' },
+                { model: Comanda, as: 'comanda', attributes: ['numero_mesa'] }
             ],
             order: [['created_at', 'DESC']],
             limit: 50 
