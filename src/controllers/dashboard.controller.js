@@ -119,22 +119,22 @@ const subMonths = (d, months) => {
 
 const getEmpresaDashboard = async (req, res) => {
   try {
-    const { empresaId, sucursalId, rol } = req.usuario;
-    // Si envían sucursal_id, la usamos. Si el usuario no es ADMIN_EMPRESA, forzamos su propia sucursalId.
+    const { empresa_id, sucursal_id, roles } = req.usuario;
+    // Si envían sucursal_id, la usamos. Si el usuario no es ADMIN_EMPRESA, forzamos su propia sucursal_id.
     const querySucursal = req.query.sucursal_id;
     let finalSucursalId = null;
     
-    if (rol === ROLES.ADMIN_EMPRESA) {
+    if (roles && roles.includes(ROLES.ADMIN_EMPRESA)) {
         finalSucursalId = querySucursal || null; 
     } else {
-        finalSucursalId = sucursalId;
+        finalSucursalId = sucursal_id;
     }
 
     const where = {};
     if (finalSucursalId) {
         where.sucursal_id = finalSucursalId;
     } else {
-        where.empresa_id = empresaId;
+        where.empresa_id = empresa_id;
     }
 
     const hoy = new Date();
