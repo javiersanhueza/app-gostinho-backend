@@ -57,7 +57,7 @@ const ROLES = require('../config/roles');
 const crearOrden = async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { cliente_id, metodo_pago, tipo_entrega, detalles } = req.body;
+    const { cliente_id, metodo_pago, tipo_entrega, detalles, total_personalizado } = req.body;
     const creador = req.usuario;
 
     const sucursal_id = req.body.sucursal_id || creador.sucursal_id;
@@ -142,11 +142,16 @@ const crearOrden = async (req, res) => {
 
     const nextFolioDiario = (folioResult?.max_folio || 0) + 1;
 
+    const isDeliveryApp = ['UBER_EATS', 'RAPPI', 'PEDIDOS_YA'].includes(metodo_pago);
+    const finalTotalOrden = (isDeliveryApp && total_personalizado !== undefined) 
+      ? Number(total_personalizado) 
+      : totalOrden;
+
     const nuevaOrden = await Orden.create({
       empresa_id: creador.empresa_id,
       sucursal_id: sucursal_id,
       cliente_id: cliente_id || null,
-      total: totalOrden,
+      total: finalTotalOrden,
       metodo_pago,
       tipo_entrega,
       estado: 'PAGADO',
