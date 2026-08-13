@@ -139,4 +139,37 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { login, recuperarPassword, resetPassword };
+const cambiarPassword = async (req, res) => {
+  try {
+    const { nuevaPassword } = req.body;
+    const usuarioId = req.usuario.id;
+
+    if (!nuevaPassword) {
+      return res.status(400).json({ error: 'La nueva contraseña es obligatoria' });
+    }
+
+    const usuario = await Usuario.findByPk(usuarioId);
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(nuevaPassword, salt);
+
+    usuario.password = hashedPassword;
+    usuario.debe_cambiar_password = false;
+    await usuario.save();
+
+    res.json({ mensaje: 'Contraseña actualizada exitosamente' });
+  } catch (error) {
+    logger.error('Error al cambiar contraseña temporal:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+module.exports = {
+  login,
+  recuperarPassword,
+  resetPassword,
+  cambiarPassword
+};

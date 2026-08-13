@@ -31,6 +31,10 @@ const Usuario = sequelize.define('Usuario', {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   },
+  debe_cambiar_password: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
   empresa_id: {
     type: DataTypes.UUID,
     allowNull: true,
