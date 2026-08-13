@@ -1,6 +1,7 @@
 const logger = require('../utils/logger');
 const Usuario = require('../models/usuario.model');
 const Empresa = require('../models/empresa.model');
+const Sucursal = require('../models/sucursal.model');
 const Rol = require('../models/rol.model');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -10,11 +11,12 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Ahora incluimos la relación con Roles
+    // Ahora incluimos la relación con Roles y Sucursal
     const usuario = await Usuario.findOne({
       where: { email },
       include: [
         { model: Empresa, as: 'empresa' },
+        { model: Sucursal, as: 'sucursal' },
         { model: Rol, as: 'roles', attributes: ['nombre'], through: { attributes: [] } } // Traemos solo el nombre del rol
       ]
     });
