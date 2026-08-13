@@ -10,8 +10,8 @@ const {
   deleteSucursal
 } = require('../controllers/sucursal.controller');
 
-// Solo ADMIN_SISTEMA y ADMIN_EMPRESA pueden gestionar sucursales
-const rolesPermitidos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA];
+// Solo ADMIN_SISTEMA, ADMIN_EMPRESA y ADMIN_SUCURSAL pueden gestionar/ver sucursales
+const rolesPermitidos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA, ROLES.ADMIN_SUCURSAL];
 
 router.get('/', verificarRol(rolesPermitidos), getSucursales);
 router.get('/:id', verificarRol(rolesPermitidos), getSucursalById);

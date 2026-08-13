@@ -54,10 +54,12 @@ const getSucursales = async (req, res) => {
     if (activo !== undefined) whereClause.activo = (activo === 'true');
 
     // Lógica de permisos y filtros de seguridad
-    if (creador.rol === ROLES.ADMIN_EMPRESA) {
+    if (creador.roles.includes(ROLES.ADMIN_EMPRESA)) {
       whereClause.empresa_id = creador.empresa_id;
-    } else if (creador.rol === ROLES.ADMIN_SISTEMA && empresa_id) {
+    } else if (creador.roles.includes(ROLES.ADMIN_SISTEMA) && empresa_id) {
       whereClause.empresa_id = empresa_id;
+    } else if (creador.roles.includes(ROLES.ADMIN_SUCURSAL)) {
+      whereClause.id = creador.sucursal_id;
     }
 
     const { count, rows } = await Sucursal.findAndCountAll({
@@ -87,7 +89,11 @@ const getSucursalById = async (req, res) => {
     
     if (!sucursal) return res.status(404).json({ error: 'Sucursal no encontrada' });
 
-    if (creador.rol === ROLES.ADMIN_EMPRESA && sucursal.empresa_id !== creador.empresa_id) {
+    if (creador.roles.includes(ROLES.ADMIN_EMPRESA) && sucursal.empresa_id !== creador.empresa_id) {
+       return res.status(403).json({ error: 'No tienes acceso a esta sucursal' });
+    }
+    
+    if (creador.roles.includes(ROLES.ADMIN_SUCURSAL) && sucursal.id !== creador.sucursal_id) {
        return res.status(403).json({ error: 'No tienes acceso a esta sucursal' });
     }
 

@@ -44,6 +44,12 @@ const crearUsuario = async (req, res) => {
           return res.status(400).json({ error: 'La sucursal indicada no pertenece a tu empresa.' });
         }
       }
+    } else if (creador.roles.includes(ROLES.ADMIN_SUCURSAL)) {
+      if (rolesNombres.some(r => [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA, ROLES.ADMIN_SUCURSAL].includes(r))) {
+        return res.status(403).json({ error: 'No tienes permisos para asignar este rol.' });
+      }
+      dataToCreate.empresa_id = creador.empresa_id;
+      dataToCreate.sucursal_id = creador.sucursal_id;
     } else {
       return res.status(403).json({ error: 'No tienes permisos para crear usuarios.' });
     }
@@ -156,7 +162,16 @@ const editarUsuario = async (req, res) => {
        return res.status(403).json({ error: 'No puedes editar usuarios de otra empresa' });
     }
 
+    if (creador.roles.includes(ROLES.ADMIN_SUCURSAL) && usuario.sucursal_id !== creador.sucursal_id) {
+       await t.rollback();
+       return res.status(403).json({ error: 'No puedes editar usuarios de otra sucursal' });
+    }
+
     let dataActualizar = { nombre, email, activo, sucursal_id };
+    if (creador.roles.includes(ROLES.ADMIN_SUCURSAL)) {
+       dataActualizar.sucursal_id = creador.sucursal_id;
+    }
+    
     if (password) {
       const salt = await bcrypt.genSalt(10);
       dataActualizar.password = await bcrypt.hash(password, salt);
@@ -200,6 +215,10 @@ const eliminarUsuario = async (req, res) => {
 
     if (creador.roles.includes(ROLES.ADMIN_EMPRESA) && usuario.empresa_id !== creador.empresa_id) {
        return res.status(403).json({ error: 'No puedes desactivar usuarios de otra empresa' });
+    }
+
+    if (creador.roles.includes(ROLES.ADMIN_SUCURSAL) && usuario.sucursal_id !== creador.sucursal_id) {
+       return res.status(403).json({ error: 'No puedes desactivar usuarios de otra sucursal' });
     }
 
     await usuario.update({ activo: false });
