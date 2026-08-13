@@ -21,10 +21,6 @@ const Cliente = sequelize.define('Cliente', {
     validate: {
       isEmail: true
     }
-  },
-  puntos_lealtad: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
   }
 }, {
   tableName: 'clientes',
