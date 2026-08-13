@@ -14,8 +14,8 @@ const crearUsuario = async (req, res) => {
     const { nombre, email, password, roles: rolesNombres, empresa_id, sucursal_id } = req.body;
     const creador = req.usuario;
 
-    if (!nombre || !password) {
-      return res.status(400).json({ error: 'El nombre y la contraseña son obligatorios' });
+    if (!nombre || !password || !email) {
+      return res.status(400).json({ error: 'El nombre, correo electrónico y contraseña son obligatorios' });
     }
     if (!rolesNombres || !Array.isArray(rolesNombres) || rolesNombres.length === 0) {
         return res.status(400).json({ error: 'El usuario debe tener al menos un rol.' });
