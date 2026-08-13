@@ -30,4 +30,19 @@ const verificarRol = (rolesPermitidos) => {
   };
 };
 
-module.exports = { verificarRol };
+const verificarToken = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No se proporcionó un token válido' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    req.usuario = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Token inválido o expirado. Inicia sesión nuevamente.' });
+  }
+};
+
+module.exports = { verificarRol, verificarToken };
