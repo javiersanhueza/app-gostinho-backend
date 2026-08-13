@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
-const Empresa = require('./empresa.model');
 
 const Cliente = sequelize.define('Cliente', {
   id: {
@@ -26,31 +25,19 @@ const Cliente = sequelize.define('Cliente', {
   puntos_lealtad: {
     type: DataTypes.INTEGER,
     defaultValue: 0
-  },
-  empresa_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'empresas',
-      key: 'id'
-    }
   }
 }, {
   tableName: 'clientes',
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
-  // Un cliente (teléfono) debe ser único POR EMPRESA
+  // Un cliente (teléfono) debe ser único en toda la plataforma
   indexes: [
     {
       unique: true,
-      fields: ['telefono', 'empresa_id']
+      fields: ['telefono']
     }
   ]
 });
-
-// Asociaciones
-Cliente.belongsTo(Empresa, { foreignKey: 'empresa_id', as: 'empresa' });
-Empresa.hasMany(Cliente, { foreignKey: 'empresa_id', as: 'clientes' });
 
 module.exports = Cliente;

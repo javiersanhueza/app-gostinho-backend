@@ -163,10 +163,30 @@ const crearOrden = async (req, res) => {
     await OrdenDetalle.bulkCreate(detallesAInsertar, { transaction: t });
 
     if (cliente_id) {
-       const puntosGanados = Math.floor(totalOrden / 1000);
-       if (puntosGanados > 0) {
-          const cliente = await Cliente.findByPk(cliente_id, { transaction: t });
-          if (cliente) await cliente.increment('puntos_lealtad', { by: puntosGanados, transaction: t });
+       const FidelidadConfig = require('../models/fidelidad_config.model');
+       const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
+       
+       const config = await FidelidadConfig.findOne({ where: { empresa_id: creador.empresa_id }, transaction: t });
+       if (config) {
+           let [billetera] = await BilleteraFidelidad.findOrCreate({
+               where: { cliente_id, empresa_id: creador.empresa_id },
+               defaults: { puntos: 0, sellos: 0 },
+               transaction: t
+           });
+           
+           if (['PUNTOS', 'AMBOS'].includes(config.tipo_programa)) {
+               if (finalTotalOrden >= config.puntos_monto_minimo) {
+                   const puntosGanados = Math.floor(finalTotalOrden * (config.puntos_porcentaje / 100));
+                   billetera.puntos += puntosGanados;
+               }
+           }
+           
+           if (['SELLOS', 'AMBOS'].includes(config.tipo_programa)) {
+               if (finalTotalOrden >= config.sellos_monto_minimo) {
+                   billetera.sellos += 1;
+               }
+           }
+           await billetera.save({ transaction: t });
        }
     }
 
@@ -244,19 +264,44 @@ const reclamarPuntos = async (req, res) => {
         await t.rollback();
         return res.status(400).json({ error: 'Esta boleta ya fue reclamada.' });
     }
-    const puntosGanados = Math.floor(orden.total / 1000);
+    const FidelidadConfig = require('../models/fidelidad_config.model');
+    const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
+    
     await orden.update({ cliente_id }, { transaction: t });
-    if (puntosGanados > 0) {
-        const cliente = await Cliente.findByPk(cliente_id, { transaction: t });
-        if (cliente) {
-            await cliente.increment('puntos_lealtad', { by: puntosGanados, transaction: t });
-        } else {
-            await t.rollback();
-            return res.status(404).json({ error: 'No se encontró tu perfil de cliente.' });
+    
+    const config = await FidelidadConfig.findOne({ where: { empresa_id: orden.empresa_id }, transaction: t });
+    if (config) {
+        let [billetera] = await BilleteraFidelidad.findOrCreate({
+            where: { cliente_id, empresa_id: orden.empresa_id },
+            defaults: { puntos: 0, sellos: 0 },
+            transaction: t
+        });
+        
+        let puntosGanados = 0;
+        let sellosGanados = 0;
+
+        if (['PUNTOS', 'AMBOS'].includes(config.tipo_programa)) {
+            if (orden.total >= config.puntos_monto_minimo) {
+                puntosGanados = Math.floor(orden.total * (config.puntos_porcentaje / 100));
+                billetera.puntos += puntosGanados;
+            }
         }
+        
+        if (['SELLOS', 'AMBOS'].includes(config.tipo_programa)) {
+            if (orden.total >= config.sellos_monto_minimo) {
+                sellosGanados = 1;
+                billetera.sellos += sellosGanados;
+            }
+        }
+        await billetera.save({ transaction: t });
+        
+        await t.commit();
+        res.json({ mensaje: `Boleta reclamada. Ganaste ${puntosGanados} puntos y ${sellosGanados} sellos.`, puntosGanados, sellosGanados });
+        return;
     }
+
     await t.commit();
-    res.json({ mensaje: '¡Puntos reclamados!', puntosGanados });
+    res.json({ mensaje: 'Boleta reclamada correctamente.', puntosGanados: 0, sellosGanados: 0 });
   } catch (error) {
     await t.rollback();
     res.status(500).json({ error: 'Error interno al procesar el reclamo.' });

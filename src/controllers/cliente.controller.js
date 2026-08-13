@@ -23,9 +23,18 @@ const crearCliente = async (req, res) => {
     const nuevoCliente = await Cliente.create({
       nombre,
       telefono,
-      email,
-      empresa_id
+      email
     });
+
+    // Crear la billetera para la empresa desde donde se crea (POS)
+    const empresa_id = req.usuario.empresa_id;
+    if (empresa_id) {
+      const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
+      await BilleteraFidelidad.create({
+        cliente_id: nuevoCliente.id,
+        empresa_id: empresa_id
+      });
+    }
 
     res.status(201).json({ mensaje: 'Cliente registrado con éxito', data: nuevoCliente });
   } catch (error) {
@@ -104,29 +113,38 @@ const sumarPuntos = async (req, res) => {
 const loginCliente = async (req, res) => {
   try {
     const { telefono } = req.body;
-    // Buscamos al cliente por teléfono en cualquier empresa por ahora (o la primera que encuentre)
-    // En el futuro, la app debería mandar un identificador de empresa (slug) si es marca blanca
+    if (!telefono) return res.status(400).json({ error: 'Teléfono es requerido' });
+
     const cliente = await Cliente.findOne({
       where: { telefono }
     });
 
     if (!cliente) {
-      // Si no existe, podríamos auto-registrarlo o pedirle que se registre
       return res.status(404).json({ error: 'Número no registrado. Regístrate en tu local más cercano.' });
     }
 
+    // Traer las billeteras del cliente (sus puntos en distintas empresas)
+    const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
+    const Empresa = require('../models/empresa.model');
+    const billeteras = await BilleteraFidelidad.findAll({
+      where: { cliente_id: cliente.id },
+      include: [{ model: Empresa, as: 'empresa', attributes: ['id', 'nombre', 'logo_url'] }]
+    });
+
     const payload = {
       id: cliente.id,
-      roles: ['CLIENTE'],
-      empresa_id: cliente.empresa_id
+      roles: ['CLIENTE']
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
 
-    res.json({
+    const clienteData = cliente.toJSON();
+    clienteData.billeteras = billeteras;
+
+    res.status(200).json({
       mensaje: 'Login exitoso',
       token,
-      cliente
+      cliente: clienteData
     });
   } catch (error) {
     logger.error('Error en login de cliente:', error);
@@ -139,28 +157,19 @@ const registroCliente = async (req, res) => {
   try {
     const { telefono, nombre } = req.body;
     
-    // Por ahora, asumimos que se registran en la primera empresa (Gostinho)
-    const Empresa = require('../models/empresa.model');
-    const empresa = await Empresa.findOne();
-    if (!empresa) {
-      return res.status(500).json({ error: 'No hay empresas configuradas en el sistema' });
-    }
-
-    const clienteExistente = await Cliente.findOne({ where: { telefono } });
-    if (clienteExistente) {
+    let cliente = await Cliente.findOne({ where: { telefono } });
+    if (cliente) {
       return res.status(400).json({ error: 'El teléfono ya está registrado. Inicia sesión.' });
     }
 
-    const nuevoCliente = await Cliente.create({
+    cliente = await Cliente.create({
       telefono,
-      nombre,
-      empresa_id: empresa.id
+      nombre
     });
 
     const payload = {
-      id: nuevoCliente.id,
-      roles: ['CLIENTE'],
-      empresa_id: nuevoCliente.empresa_id
+      id: cliente.id,
+      roles: ['CLIENTE']
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -168,7 +177,7 @@ const registroCliente = async (req, res) => {
     res.status(201).json({
       mensaje: 'Registro exitoso',
       token,
-      cliente: nuevoCliente
+      cliente
     });
   } catch (error) {
     logger.error('Error en registro de cliente:', error);
