@@ -4,7 +4,8 @@ const {
   crearCliente,
   obtenerClientes,
   buscarPorTelefono,
-  sumarPuntos
+  sumarPuntos,
+  loginCliente
 } = require('../controllers/cliente.controller');
 
 
@@ -15,6 +16,10 @@ const router = Router();
 
 const rolesPermitidos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA, ROLES.ADMIN_SUCURSAL, ROLES.CAJERO];
 
+// Ruta PÚBLICA (Loyalty App)
+router.post('/auth', loginCliente);
+
+// Rutas PRIVADAS (POS y Admin)
 router.post('/', verificarRol(rolesPermitidos), crearCliente);
 router.get('/', verificarRol(rolesPermitidos), obtenerClientes);
 router.get('/telefono/:telefono', verificarRol(rolesPermitidos), buscarPorTelefono);
