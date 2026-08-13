@@ -10,7 +10,7 @@ const ROLES = require('../config/roles');
 
 const router = Router();
 
-const rolesPermitidos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA];
+const rolesPermitidos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA, ROLES.ADMIN_SUCURSAL];
 
 // Swagger Documentación de Usuarios
 
