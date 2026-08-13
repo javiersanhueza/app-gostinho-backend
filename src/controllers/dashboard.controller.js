@@ -158,13 +158,25 @@ const getEmpresaDashboard = async (req, res) => {
     const ventasMesPasado = await calcSum(startOfMonth(mesPasado), endOfMonth(mesPasado));
     const crecimientoMes = ventasMesPasado > 0 ? parseFloat(((ventasMes - ventasMesPasado) / ventasMesPasado * 100).toFixed(1)) : (ventasMes > 0 ? 100 : 0);
 
-    // Ventas últimos 7 días
-    const ventasSemana = [];
+    // Ventas últimos 7 días (en paralelo)
+    const promesasSemana = [];
     for (let i = 6; i >= 0; i--) {
       const d = subDays(hoy, i);
-      const sum = await calcSum(startOfDay(d), endOfDay(d));
-      ventasSemana.push({ date: d.toISOString(), total: sum });
+      promesasSemana.push(
+        calcSum(startOfDay(d), endOfDay(d)).then(sum => ({ date: d.toISOString(), total: sum }))
+      );
     }
+    const ventasSemana = await Promise.all(promesasSemana);
+
+    // Ventas últimos 30 días (en paralelo)
+    const promesasMes = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = subDays(hoy, i);
+      promesasMes.push(
+        calcSum(startOfDay(d), endOfDay(d)).then(sum => ({ date: d.toISOString(), total: sum }))
+      );
+    }
+    const ventasMesGrafico = await Promise.all(promesasMes);
 
     res.json({
       ventasHoy,
@@ -173,7 +185,8 @@ const getEmpresaDashboard = async (req, res) => {
       ventasMes,
       ventasMesPasado,
       crecimientoMes,
-      ventasSemana
+      ventasSemana,
+      ventasMesGrafico
     });
   } catch (error) {
     logger.error('Error en getEmpresaDashboard:', error);
