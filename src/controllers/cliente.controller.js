@@ -13,7 +13,7 @@ const crearCliente = async (req, res) => {
     }
 
     const clienteExistente = await Cliente.findOne({
-      where: { telefono, empresa_id }
+      where: { telefono }
     });
 
     if (clienteExistente) {
@@ -27,7 +27,6 @@ const crearCliente = async (req, res) => {
     });
 
     // Crear la billetera para la empresa desde donde se crea (POS)
-    const empresa_id = req.usuario.empresa_id;
     if (empresa_id) {
       const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
       await BilleteraFidelidad.create({
