@@ -134,4 +134,46 @@ const loginCliente = async (req, res) => {
   }
 };
 
-module.exports = { crearCliente, obtenerClientes, buscarPorTelefono, sumarPuntos, loginCliente };
+// 6. Autoregistro de Cliente (Loyalty App)
+const registroCliente = async (req, res) => {
+  try {
+    const { telefono, nombre } = req.body;
+    
+    // Por ahora, asumimos que se registran en la primera empresa (Gostinho)
+    const Empresa = require('../models/empresa.model');
+    const empresa = await Empresa.findOne();
+    if (!empresa) {
+      return res.status(500).json({ error: 'No hay empresas configuradas en el sistema' });
+    }
+
+    const clienteExistente = await Cliente.findOne({ where: { telefono } });
+    if (clienteExistente) {
+      return res.status(400).json({ error: 'El teléfono ya está registrado. Inicia sesión.' });
+    }
+
+    const nuevoCliente = await Cliente.create({
+      telefono,
+      nombre,
+      empresa_id: empresa.id
+    });
+
+    const payload = {
+      id: nuevoCliente.id,
+      roles: ['CLIENTE'],
+      empresa_id: nuevoCliente.empresa_id
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+    res.status(201).json({
+      mensaje: 'Registro exitoso',
+      token,
+      cliente: nuevoCliente
+    });
+  } catch (error) {
+    logger.error('Error en registro de cliente:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+module.exports = { crearCliente, obtenerClientes, buscarPorTelefono, sumarPuntos, loginCliente, registroCliente };
