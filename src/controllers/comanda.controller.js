@@ -309,7 +309,7 @@ const cerrarComanda = async (req, res) => {
 const obtenerComandasAbiertas = async (req, res) => {
     try {
         const creador = req.usuario;
-        const sucursal_id = req.query.sucursal_id || req.body.sucursal_id || creador.sucursal_id;
+        const sucursal_id = req.query.sucursal_id || req.body?.sucursal_id || creador?.sucursal_id;
         
         if (!sucursal_id) {
             return res.status(400).json({ error: 'Falta especificar la sucursal_id.' });
