@@ -45,6 +45,10 @@ const FidelidadConfig = sequelize.define('FidelidadConfig', {
   premio_producto_id: {
     type: DataTypes.UUID,
     allowNull: true // Puede ser null si aún no han configurado premio
+  },
+  premio_variante_id: {
+    type: DataTypes.UUID,
+    allowNull: true
   }
 }, {
   tableName: 'fidelidad_configs',

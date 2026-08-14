@@ -23,7 +23,7 @@ const obtenerConfig = async (req, res) => {
 const actualizarConfig = async (req, res) => {
   try {
     const empresa_id = req.usuario.empresa_id;
-    const { tipo_programa, puntos_porcentaje, puntos_monto_minimo, sellos_meta, sellos_monto_minimo, premio_producto_id } = req.body;
+    const { tipo_programa, puntos_porcentaje, puntos_monto_minimo, sellos_meta, sellos_monto_minimo, premio_producto_id, premio_variante_id } = req.body;
 
     let config = await FidelidadConfig.findOne({ where: { empresa_id } });
     if (!config) {
@@ -34,7 +34,8 @@ const actualizarConfig = async (req, res) => {
         puntos_monto_minimo,
         sellos_meta,
         sellos_monto_minimo,
-        premio_producto_id
+        premio_producto_id,
+        premio_variante_id
       });
     } else {
       await config.update({
@@ -43,7 +44,8 @@ const actualizarConfig = async (req, res) => {
         puntos_monto_minimo,
         sellos_meta,
         sellos_monto_minimo,
-        premio_producto_id
+        premio_producto_id,
+        premio_variante_id
       });
     }
 
