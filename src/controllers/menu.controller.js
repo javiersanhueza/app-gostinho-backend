@@ -103,6 +103,9 @@ const obtenerMenuPublico = async (req, res) => {
         }
       });
     });
+    // 5. Obtener configuración de fidelidad de la empresa
+    const FidelidadConfig = require('../models/fidelidad_config.model');
+    const fidelidadConfig = await FidelidadConfig.findOne({ where: { empresa_id: sucursal.empresa_id } });
 
     res.json({
       data: {
@@ -112,6 +115,7 @@ const obtenerMenuPublico = async (req, res) => {
           direccion: sucursal.direccion,
           empresa: sucursal.empresa
         },
+        fidelidadConfig: fidelidadConfig || null,
         categorias: categoriasConProductos,
         promociones: descuentosActivos.map(d => ({
           nombre: d.nombre,
