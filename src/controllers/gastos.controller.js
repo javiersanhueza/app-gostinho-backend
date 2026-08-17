@@ -110,7 +110,7 @@ const borrarGasto = async (req, res) => {
 const actualizarGasto = async (req, res) => {
   try {
     const { id } = req.params;
-    const { fecha, categoria_gasto_id, producto_gasto_id, nombre_producto, cantidad, unidad_medida_id, monto_total, metodo_pago, tipo_recibo } = req.body;
+    const { fecha, categoria_gasto_id, producto_gasto_id, nombre_producto, cantidad, unidad_medida_id, monto_total, metodo_pago, tipo_recibo, observacion } = req.body;
     
     const gasto = await Gasto.findOne({ where: { id, empresa_id: req.usuario.empresa_id } });
     if (!gasto) return res.status(404).json({ error: 'Gasto no encontrado' });
@@ -130,7 +130,8 @@ const actualizarGasto = async (req, res) => {
       unidad_medida_id,
       monto_total,
       metodo_pago,
-      tipo_recibo
+      tipo_recibo,
+      observacion
     });
 
     res.json({ data: gasto, mensaje: 'Gasto actualizado correctamente' });

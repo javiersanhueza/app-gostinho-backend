@@ -36,6 +36,10 @@ const Gasto = sequelize.define('Gasto', {
     type: DataTypes.STRING(50),
     allowNull: true // Ej: Boleta, Factura
   },
+  observacion: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   categoria_gasto_id: {
     type: DataTypes.UUID,
     allowNull: false,
