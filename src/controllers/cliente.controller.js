@@ -63,10 +63,9 @@ const obtenerClientes = async (req, res) => {
 const buscarPorTelefono = async (req, res) => {
   try {
     const { telefono } = req.params;
-    const empresa_id = req.usuario.empresa_id;
 
     const cliente = await Cliente.findOne({
-      where: { telefono, empresa_id }
+      where: { telefono }
     });
 
     if (!cliente) {
