@@ -184,4 +184,40 @@ const registroCliente = async (req, res) => {
   }
 };
 
-module.exports = { crearCliente, obtenerClientes, buscarPorTelefono, sumarPuntos, loginCliente, registroCliente };
+const actualizarPerfilCliente = async (req, res) => {
+  try {
+    const clienteId = req.usuario.id;
+    const { nombre, email } = req.body;
+
+    const cliente = await Cliente.findByPk(clienteId);
+    if (!cliente) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    if (nombre) cliente.nombre = nombre;
+    if (email !== undefined) cliente.email = email;
+
+    await cliente.save();
+
+    res.json(cliente);
+  } catch (error) {
+    logger.error('Error actualizando perfil del cliente:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+const obtenerPerfilCliente = async (req, res) => {
+  try {
+    const clienteId = req.usuario.id;
+    const cliente = await Cliente.findByPk(clienteId);
+    if (!cliente) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+    res.json(cliente);
+  } catch (error) {
+    logger.error('Error obteniendo perfil del cliente:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+module.exports = { crearCliente, obtenerClientes, buscarPorTelefono, sumarPuntos, loginCliente, registroCliente, actualizarPerfilCliente, obtenerPerfilCliente };

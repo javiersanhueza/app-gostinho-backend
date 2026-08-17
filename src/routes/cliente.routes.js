@@ -6,11 +6,13 @@ const {
   buscarPorTelefono,
   sumarPuntos,
   loginCliente,
-  registroCliente
+  registroCliente,
+  actualizarPerfilCliente,
+  obtenerPerfilCliente
 } = require('../controllers/cliente.controller');
 
 
-const { verificarRol } = require('../middlewares/auth.middleware');
+const { verificarRol, verificarToken } = require('../middlewares/auth.middleware');
 const ROLES = require('../config/roles');
 
 const router = Router();
@@ -20,6 +22,8 @@ const rolesPermitidos = [ROLES.ADMIN_SISTEMA, ROLES.ADMIN_EMPRESA, ROLES.ADMIN_S
 // Ruta PÚBLICA (Loyalty App)
 router.post('/auth', loginCliente);
 router.post('/auth/registro', registroCliente);
+router.get('/me', verificarToken, obtenerPerfilCliente);
+router.put('/me', verificarToken, actualizarPerfilCliente);
 
 // Rutas PRIVADAS (POS y Admin)
 router.post('/', verificarRol(rolesPermitidos), crearCliente);
