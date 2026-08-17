@@ -58,7 +58,7 @@ const Comanda = require('../models/comanda.model');
 const crearOrden = async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { cliente_id, metodo_pago, tipo_entrega, detalles, total_personalizado } = req.body;
+    const { cliente_id, telefono_cliente, metodo_pago, tipo_entrega, detalles, total_personalizado } = req.body;
     const creador = req.usuario;
 
     const sucursal_id = req.body.sucursal_id || creador.sucursal_id;
@@ -70,6 +70,18 @@ const crearOrden = async (req, res) => {
     if (!detalles || detalles.length === 0) {
       await t.rollback();
       return res.status(400).json({ error: 'La orden debe tener al menos un producto.' });
+    }
+
+    let final_cliente_id = cliente_id || null;
+
+    if (telefono_cliente && !final_cliente_id) {
+      const cliente = await Cliente.findOne({ where: { telefono: telefono_cliente }, transaction: t });
+      if (cliente) {
+        final_cliente_id = cliente.id;
+      } else {
+        await t.rollback();
+        return res.status(404).json({ error: 'Cliente no encontrado con ese teléfono. Debe registrarse primero.' });
+      }
     }
 
     let totalOrden = 0;
@@ -151,7 +163,7 @@ const crearOrden = async (req, res) => {
     const nuevaOrden = await Orden.create({
       empresa_id: creador.empresa_id,
       sucursal_id: sucursal_id,
-      cliente_id: cliente_id || null,
+      cliente_id: final_cliente_id,
       total: finalTotalOrden,
       metodo_pago,
       tipo_entrega,
@@ -162,14 +174,14 @@ const crearOrden = async (req, res) => {
     const detallesAInsertar = detallesProcesados.map(d => ({ ...d, orden_id: nuevaOrden.id }));
     await OrdenDetalle.bulkCreate(detallesAInsertar, { transaction: t });
 
-    if (cliente_id) {
+    if (final_cliente_id) {
        const FidelidadConfig = require('../models/fidelidad_config.model');
        const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
        
        const config = await FidelidadConfig.findOne({ where: { empresa_id: creador.empresa_id }, transaction: t });
        if (config) {
            let [billetera] = await BilleteraFidelidad.findOrCreate({
-               where: { cliente_id, empresa_id: creador.empresa_id },
+               where: { cliente_id: final_cliente_id, empresa_id: creador.empresa_id },
                defaults: { puntos: 0, sellos: 0 },
                transaction: t
            });
