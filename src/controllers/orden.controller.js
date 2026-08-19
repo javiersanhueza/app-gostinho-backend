@@ -58,7 +58,7 @@ const Comanda = require('../models/comanda.model');
 const crearOrden = async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { cliente_id, telefono_cliente, metodo_pago, tipo_entrega, detalles, total_personalizado } = req.body;
+    const { cliente_id, telefono_cliente, metodo_pago, tipo_entrega, detalles, total_personalizado, no_acumula_fidelidad } = req.body;
     const creador = req.usuario;
 
     const sucursal_id = req.body.sucursal_id || creador.sucursal_id;
@@ -174,7 +174,7 @@ const crearOrden = async (req, res) => {
     const detallesAInsertar = detallesProcesados.map(d => ({ ...d, orden_id: nuevaOrden.id }));
     await OrdenDetalle.bulkCreate(detallesAInsertar, { transaction: t });
 
-    if (final_cliente_id) {
+    if (final_cliente_id && !no_acumula_fidelidad) {
        const FidelidadConfig = require('../models/fidelidad_config.model');
        const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
        
