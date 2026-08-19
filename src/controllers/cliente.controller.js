@@ -271,7 +271,17 @@ const actualizarPerfilCliente = async (req, res) => {
 
     await cliente.save();
 
-    res.json(cliente);
+    const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
+    const Empresa = require('../models/empresa.model');
+    const billeteras = await BilleteraFidelidad.findAll({
+      where: { cliente_id: cliente.id },
+      include: [{ model: Empresa, as: 'empresa', attributes: ['id', 'nombre', 'logo_url'] }]
+    });
+
+    const clienteData = cliente.toJSON();
+    clienteData.billeteras = billeteras;
+
+    res.json(clienteData);
   } catch (error) {
     logger.error('Error actualizando perfil del cliente:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
@@ -281,11 +291,23 @@ const actualizarPerfilCliente = async (req, res) => {
 const obtenerPerfilCliente = async (req, res) => {
   try {
     const clienteId = req.usuario.id;
+    const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
+    const Empresa = require('../models/empresa.model');
+    
     const cliente = await Cliente.findByPk(clienteId);
     if (!cliente) {
       return res.status(404).json({ error: 'Cliente no encontrado' });
     }
-    res.json(cliente);
+
+    const billeteras = await BilleteraFidelidad.findAll({
+      where: { cliente_id: cliente.id },
+      include: [{ model: Empresa, as: 'empresa', attributes: ['id', 'nombre', 'logo_url'] }]
+    });
+
+    const clienteData = cliente.toJSON();
+    clienteData.billeteras = billeteras;
+
+    res.json(clienteData);
   } catch (error) {
     logger.error('Error obteniendo perfil del cliente:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
