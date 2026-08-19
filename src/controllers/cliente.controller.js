@@ -62,6 +62,7 @@ const obtenerClientes = async (req, res) => {
       const c = b.cliente.toJSON();
       c.puntos = b.puntos;
       c.puntos_lealtad = b.puntos; // Mantenemos retrocompatibilidad si el frontend lo usa
+      c.sellos = b.sellos; // Agregamos los sellos
       c.billetera_id = b.id;
       return c;
     }).filter(c => c !== null);
@@ -92,6 +93,8 @@ const buscarPorTelefono = async (req, res) => {
       const billetera = await BilleteraFidelidad.findOne({ where: { cliente_id: cliente.id, empresa_id } });
       const data = cliente.toJSON();
       data.puntos = billetera ? billetera.puntos : 0;
+      data.puntos_lealtad = data.puntos;
+      data.sellos = billetera ? billetera.sellos : 0;
       return res.json({ data });
     }
 
