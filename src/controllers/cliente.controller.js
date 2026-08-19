@@ -197,9 +197,16 @@ const loginCliente = async (req, res) => {
     // Traer las billeteras del cliente (sus puntos en distintas empresas)
     const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
     const Empresa = require('../models/empresa.model');
+    const FidelidadConfig = require('../models/fidelidad_config.model');
+    
     const billeteras = await BilleteraFidelidad.findAll({
       where: { cliente_id: cliente.id },
-      include: [{ model: Empresa, as: 'empresa', attributes: ['id', 'nombre', 'logo_url'] }]
+      include: [{ 
+        model: Empresa, 
+        as: 'empresa', 
+        attributes: ['id', 'nombre', 'logo_url'],
+        include: [{ model: FidelidadConfig, as: 'fidelidad_config' }]
+      }]
     });
 
     const payload = {
@@ -273,9 +280,15 @@ const actualizarPerfilCliente = async (req, res) => {
 
     const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
     const Empresa = require('../models/empresa.model');
+    const FidelidadConfig = require('../models/fidelidad_config.model');
     const billeteras = await BilleteraFidelidad.findAll({
       where: { cliente_id: cliente.id },
-      include: [{ model: Empresa, as: 'empresa', attributes: ['id', 'nombre', 'logo_url'] }]
+      include: [{ 
+        model: Empresa, 
+        as: 'empresa', 
+        attributes: ['id', 'nombre', 'logo_url'],
+        include: [{ model: FidelidadConfig, as: 'fidelidad_config' }]
+      }]
     });
 
     const clienteData = cliente.toJSON();
@@ -293,6 +306,7 @@ const obtenerPerfilCliente = async (req, res) => {
     const clienteId = req.usuario.id;
     const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
     const Empresa = require('../models/empresa.model');
+    const FidelidadConfig = require('../models/fidelidad_config.model');
     
     const cliente = await Cliente.findByPk(clienteId);
     if (!cliente) {
@@ -301,7 +315,12 @@ const obtenerPerfilCliente = async (req, res) => {
 
     const billeteras = await BilleteraFidelidad.findAll({
       where: { cliente_id: cliente.id },
-      include: [{ model: Empresa, as: 'empresa', attributes: ['id', 'nombre', 'logo_url'] }]
+      include: [{ 
+        model: Empresa, 
+        as: 'empresa', 
+        attributes: ['id', 'nombre', 'logo_url'],
+        include: [{ model: FidelidadConfig, as: 'fidelidad_config' }]
+      }]
     });
 
     const clienteData = cliente.toJSON();
