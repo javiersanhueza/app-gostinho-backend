@@ -46,11 +46,25 @@ const crearCliente = async (req, res) => {
 const obtenerClientes = async (req, res) => {
   try {
     const empresa_id = req.usuario.empresa_id;
+    const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
 
-    const clientes = await Cliente.findAll({
+    const billeteras = await BilleteraFidelidad.findAll({
       where: { empresa_id },
-      order: [['puntos_lealtad', 'DESC']]
+      include: [{
+        model: Cliente,
+        as: 'cliente'
+      }],
+      order: [['puntos', 'DESC']]
     });
+
+    const clientes = billeteras.map(b => {
+      if (!b.cliente) return null;
+      const c = b.cliente.toJSON();
+      c.puntos = b.puntos;
+      c.puntos_lealtad = b.puntos; // Mantenemos retrocompatibilidad si el frontend lo usa
+      c.billetera_id = b.id;
+      return c;
+    }).filter(c => c !== null);
 
     res.json({ data: clientes });
   } catch (error) {
@@ -63,6 +77,7 @@ const obtenerClientes = async (req, res) => {
 const buscarPorTelefono = async (req, res) => {
   try {
     const { telefono } = req.params;
+    const empresa_id = req.usuario ? req.usuario.empresa_id : null;
 
     const cliente = await Cliente.findOne({
       where: { telefono }
@@ -70,6 +85,14 @@ const buscarPorTelefono = async (req, res) => {
 
     if (!cliente) {
       return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    if (empresa_id) {
+      const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
+      const billetera = await BilleteraFidelidad.findOne({ where: { cliente_id: cliente.id, empresa_id } });
+      const data = cliente.toJSON();
+      data.puntos = billetera ? billetera.puntos : 0;
+      return res.json({ data });
     }
 
     res.json({ data: cliente });
@@ -86,20 +109,31 @@ const sumarPuntos = async (req, res) => {
     const { puntosGanados } = req.body;
     const empresa_id = req.usuario.empresa_id;
 
-    const cliente = await Cliente.findOne({
-      where: { id, empresa_id }
+    const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
+    
+    // Buscar billetera de fidelidad, si no existe la creamos
+    let billetera = await BilleteraFidelidad.findOne({
+      where: { cliente_id: id, empresa_id }
     });
 
-    if (!cliente) {
-      return res.status(404).json({ error: 'Cliente no encontrado' });
+    if (!billetera) {
+      const cliente = await Cliente.findByPk(id);
+      if (!cliente) {
+        return res.status(404).json({ error: 'Cliente no encontrado' });
+      }
+      billetera = await BilleteraFidelidad.create({
+        cliente_id: id,
+        empresa_id,
+        puntos: 0
+      });
     }
 
-    cliente.puntos_lealtad += puntosGanados;
-    await cliente.save();
+    billetera.puntos += puntosGanados;
+    await billetera.save();
 
     res.json({
       mensaje: `¡Se han sumado ${puntosGanados} puntos!`,
-      data: cliente
+      data: billetera
     });
   } catch (error) {
     logger.error(error);
