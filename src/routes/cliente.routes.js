@@ -1,4 +1,3 @@
-
 const { Router } = require('express');
 const {
   crearCliente,
@@ -8,9 +7,9 @@ const {
   loginCliente,
   registroCliente,
   actualizarPerfilCliente,
-  obtenerPerfilCliente
+  obtenerPerfilCliente,
+  ajustarFidelidad
 } = require('../controllers/cliente.controller');
-
 
 const { verificarRol, verificarToken } = require('../middlewares/auth.middleware');
 const ROLES = require('../config/roles');
@@ -30,5 +29,6 @@ router.post('/', verificarRol(rolesPermitidos), crearCliente);
 router.get('/', verificarRol(rolesPermitidos), obtenerClientes);
 router.get('/telefono/:telefono', verificarRol(rolesPermitidos), buscarPorTelefono);
 router.put('/:id/puntos', verificarRol(rolesPermitidos), sumarPuntos);
+router.post('/:id/ajustar-fidelidad', verificarRol(rolesPermitidos), ajustarFidelidad);
 
 module.exports = router;

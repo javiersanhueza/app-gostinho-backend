@@ -144,6 +144,42 @@ const sumarPuntos = async (req, res) => {
   }
 };
 
+// 5. Ajustar Fidelidad (Admin/POS)
+const ajustarFidelidad = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { puntos, sellos, motivo } = req.body;
+    const empresa_id = req.usuario.empresa_id;
+
+    const BilleteraFidelidad = require('../models/billetera_fidelidad.model');
+    
+    let billetera = await BilleteraFidelidad.findOne({
+      where: { cliente_id: id, empresa_id }
+    });
+
+    if (!billetera) {
+      const cliente = await Cliente.findByPk(id);
+      if (!cliente) return res.status(404).json({ error: 'Cliente no encontrado' });
+      billetera = await BilleteraFidelidad.create({
+        cliente_id: id,
+        empresa_id,
+        puntos: 0,
+        sellos: 0
+      });
+    }
+
+    if (puntos !== undefined && puntos !== null) billetera.puntos += Number(puntos);
+    if (sellos !== undefined && sellos !== null) billetera.sellos += Number(sellos);
+    
+    await billetera.save();
+
+    res.json({ success: true, data: billetera });
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ error: 'Error al ajustar fidelidad' });
+  }
+};
+
 // 5. Login de Cliente (Loyalty App)
 const loginCliente = async (req, res) => {
   try {
@@ -256,4 +292,14 @@ const obtenerPerfilCliente = async (req, res) => {
   }
 };
 
-module.exports = { crearCliente, obtenerClientes, buscarPorTelefono, sumarPuntos, loginCliente, registroCliente, actualizarPerfilCliente, obtenerPerfilCliente };
+module.exports = {
+  crearCliente,
+  obtenerClientes,
+  buscarPorTelefono,
+  sumarPuntos,
+  loginCliente,
+  registroCliente,
+  actualizarPerfilCliente,
+  obtenerPerfilCliente,
+  ajustarFidelidad
+};
